@@ -1,0 +1,168 @@
+import React, { useState, useEffect } from "react";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
+import { motion } from "framer-motion";
+import { User, Lock, ArrowLeft, UserPlus, Eye, EyeOff, GitBranch } from "lucide-react";
+import toast from "react-hot-toast";
+import { supabase } from "../lib/supabase";
+import { saveMemberSession } from "../lib/auth";
+import { generateReferralCode } from "../lib/helpers";
+import { Button, Input, Label } from "./ui";
+
+const LOGO_URL = "https://media.base44.com/images/public/69f351e73d5a6169e8e9b7a5/82fc320ca_ChatGPTImageApr28202608_17_52PM.png";
+
+export default function Register() {
+  const [params] = useSearchParams();
+  const ref = params.get("ref") || "";
+  const nav = useNavigate();
+  const [form, setForm] = useState({ username: "", password: "", confirm_password: "" });
+  const [showPwd, setShowPwd] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [referrerInfo, setReferrerInfo] = useState(null);
+  const [usernameStatus, setUsernameStatus] = useState("idle"); // idle | checking | taken | available
+
+  useEffect(() => {
+    if (!ref) return;
+    (async () => {
+      const { data } = await supabase.from("members").select("username,referral_code,full_name").eq("referral_code", ref).limit(1);
+      if (data?.[0]) setReferrerInfo(data[0]);
+    })();
+  }, [ref]);
+
+  // Live username availability check (debounced)
+  useEffect(() => {
+    const username = form.username.trim();
+    if (!username) { setUsernameStatus("idle"); return; }
+    setUsernameStatus("checking");
+    const timer = setTimeout(async () => {
+      const { data: existing } = await supabase.from("members").select("id").ilike("username", username).limit(1);
+      setUsernameStatus(existing?.length > 0 ? "taken" : "available");
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [form.username]);
+
+  async function submit(e) {
+    e.preventDefault();
+    if (form.password !== form.confirm_password) {
+      toast.error("Passwords do not match");
+      return;
+    }
+    if (form.password.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+    if (usernameStatus === "taken") {
+      toast.error("Username is already taken. Please choose another.");
+      return;
+    }
+    setBusy(true);
+    try {
+      const { data: existing } = await supabase.from("members").select("id").ilike("username", form.username.trim()).limit(1);
+      if (existing?.length > 0) {
+        toast.error("Username already taken");
+        setBusy(false);
+        return;
+      }
+      let referrerId = null;
+      if (ref) {
+        const { data: referrer } = await supabase.from("members").select("id").eq("referral_code", ref).limit(1);
+        if (referrer?.[0]) referrerId = referrer[0].id;
+      }
+      const { data: newMember, error } = await supabase
+        .from("members")
+        .insert({
+          username: form.username,
+          password: form.password,
+          full_name: form.username,
+          referral_code: generateReferralCode(),
+          referrer_id: referrerId,
+          status: referrerId ? "pending" : "approved",
+          role: "member",
+          tree_level: 0,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      saveMemberSession(newMember.id);
+      toast.success(`Welcome, ${newMember.full_name}!`);
+      nav("/Dashboard");
+    } catch (err) {
+      toast.error(err.message || "Registration failed");
+    }
+    setBusy(false);
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-amber-50 flex items-center justify-center p-6">
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
+        <Link to="/MemberLogin" className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 font-medium">
+          <ArrowLeft className="w-4 h-4" /> Back to Login
+        </Link>
+        <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
+          <div className="bg-gradient-to-r from-amber-500 to-orange-600 p-8 text-center">
+            <img src={LOGO_URL} alt="Mamlakah" className="w-20 h-20 rounded-2xl mx-auto mb-4 object-cover shadow-lg" />
+            <h1 className="text-2xl font-bold text-white">Mamlakah Registration Form</h1>
+          </div>
+          <form onSubmit={submit} className="p-8 space-y-5">
+            {referrerInfo && (
+              <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <GitBranch className="w-5 h-5 text-white" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs text-amber-600 font-medium">Referred by</p>
+                  <p className="text-sm font-bold text-gray-900 truncate">@{referrerInfo.username}</p>
+                  <p className="text-xs text-gray-500">Referral Code: {referrerInfo.referral_code}</p>
+                </div>
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label>Username *</Label>
+              <div className="relative">
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Input value={form.username} onChange={e => setForm({ ...form, username: e.target.value })} placeholder="Choose a username" className={`pl-12 ${usernameStatus === "taken" ? "border-red-400 focus:border-red-500" : usernameStatus === "available" ? "border-green-400 focus:border-green-500" : ""}`} required />
+                {usernameStatus === "taken" && (
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-red-500 text-sm font-medium">✕ Taken</span>
+                )}
+                {usernameStatus === "available" && (
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-green-500 text-sm font-medium">✓ Available</span>
+                )}
+                {usernameStatus === "checking" && (
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm">Checking...</span>
+                )}
+              </div>
+              {usernameStatus === "taken" && (
+                <p className="text-sm text-red-500 font-medium">This username is already taken. Please choose another.</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label>Password *</Label>
+              <div className="relative">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Input type={showPwd ? "text" : "password"} value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} placeholder="At least 6 characters" className="pl-12 pr-12" required />
+                <button type="button" onClick={() => setShowPwd(!showPwd)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                  {showPwd ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Confirm Password *</Label>
+              <div className="relative">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Input type={showPwd ? "text" : "password"} value={form.confirm_password} onChange={e => setForm({ ...form, confirm_password: e.target.value })} placeholder="Re-enter your password" className="pl-12" required />
+              </div>
+            </div>
+            <Button type="submit" disabled={busy} className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white h-12 rounded-xl font-bold">
+              {busy ? "Submitting..." : "Submit Registration"} <UserPlus className="ml-2 w-5 h-5" />
+            </Button>
+            <p className="text-center text-gray-600">Already have an account? <Link to="/MemberLogin" className="text-amber-600 font-semibold hover:underline">Login here</Link></p>
+            <a href="https://forms.gle/bMLvWgG2KGfYXzBz8" target="_blank" rel="noopener noreferrer">
+              <Button type="button" className="w-full bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold h-12 rounded-xl">
+                Membership Terms & Conditions
+              </Button>
+            </a>
+          </form>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
