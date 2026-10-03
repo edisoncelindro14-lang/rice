@@ -20,7 +20,7 @@ export default function Landing() {
     <div
       className="min-h-screen w-full text-white overflow-x-hidden relative"
       style={{
-        backgroundImage: `linear-gradient(to bottom right, rgba(17,17,17,0.82), rgba(26,22,14,0.86)), url('${BG_URL}')`,
+        backgroundImage: `linear-gradient(to bottom right, rgba(17,17,17,0.45), rgba(26,22,14,0.5)), url('${BG_URL}')`,
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundAttachment: "fixed",
