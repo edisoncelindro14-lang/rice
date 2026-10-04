@@ -6,10 +6,10 @@ import toast from "react-hot-toast";
 import { useTable, useCurrentMember } from "../lib/useData";
 import { supabase } from "../lib/supabase";
 import { redeemCode } from "../lib/redeem";
-import { formatDate, formatTime } from "../lib/helpers";
+import { formatDate, formatTime, maintenanceStatus } from "../lib/helpers";
 import { Button, Badge } from "./ui";
 
-const REDEEM_LOCK_SECONDS = 3600; // 1 hour countdown before a code can be redeemed
+const REDEEM_UNLOCK_THRESHOLD = 3600; // redeem enabled when 12h maintenance countdown has ≤1h left
 
 export default function CodeCabinet() {
   const nav = useNavigate();
@@ -66,15 +66,14 @@ export default function CodeCabinet() {
     toast.success("Code copied! Paste it in the Maintenance Code box on your Dashboard.");
   }
 
-  function getLockSeconds(code) {
-    const elapsed = Math.floor((now - new Date(code.created_at).getTime()) / 1000);
-    return Math.max(0, REDEEM_LOCK_SECONDS - elapsed);
-  }
+  const maintenance = currentMember ? maintenanceStatus(currentMember, codes) : null;
+  // Redeem is locked unless: never redeemed before, maintenance expired, or ≤1h left on the 12h countdown
+  const canRedeem = !maintenance || !maintenance.isGreen || maintenance.secondsLeft <= REDEEM_UNLOCK_THRESHOLD;
+  const lockSeconds = maintenance && maintenance.isGreen ? maintenance.secondsLeft : 0;
 
   async function handleRedeem(code) {
-    const lock = getLockSeconds(code);
-    if (lock > 0) {
-      toast.error(`Wait ${formatTime(lock)} before redeeming this code.`);
+    if (!canRedeem) {
+      toast.error(`Redeem unlocks in ${formatTime(lockSeconds - REDEEM_UNLOCK_THRESHOLD)} when 1 hour remains.`);
       return;
     }
     setRedeemBusyId(code.id);
@@ -97,7 +96,7 @@ export default function CodeCabinet() {
         </div>
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Code Cabinet</h1>
-          <p className="text-gray-500">Codes assigned to you by the store. Each code unlocks for redemption 1 hour after receipt.</p>
+          <p className="text-gray-500">Codes assigned to you by the store. Redemption unlocks when your 12-hour maintenance cycle has 1 hour remaining.</p>
         </div>
       </motion.div>
 
@@ -127,38 +126,34 @@ export default function CodeCabinet() {
           <p className="text-center py-10 text-gray-400">No codes assigned to you yet. When a store sends you a code, it will appear here.</p>
         ) : (
           <div className="divide-y divide-gray-50">
-            {pending.map(c => {
-              const lock = getLockSeconds(c);
-              const locked = lock > 0;
-              return (
-                <div key={c.id} className="flex items-center justify-between px-6 py-4">
-                  <div>
-                    <p className="font-mono font-bold text-gray-900">{c.code}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">Received {formatDate(c.created_at, "MMM d, yyyy h:mm a")}</p>
-                    {locked && (
-                      <p className="text-xs font-semibold text-orange-600 mt-1 flex items-center gap-1">
-                        <Clock className="w-3 h-3" /> Unlocks in {formatTime(lock)}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button size="sm" variant="outline" onClick={() => copyCode(c.code)}>
-                      <Copy className="w-3.5 h-3.5" /> Copy
-                    </Button>
-                    <Button
-                      size="sm"
-                      disabled={locked || redeemBusyId === c.id}
-                      className={locked
-                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                        : "bg-gradient-to-r from-violet-500 to-purple-600 text-white"}
-                      onClick={() => handleRedeem(c)}
-                    >
-                      {redeemBusyId === c.id ? "Redeeming..." : "Redeem"} {!locked && <ArrowRight className="w-3.5 h-3.5" />}
-                    </Button>
-                  </div>
+            {pending.map(c => (
+              <div key={c.id} className="flex items-center justify-between px-6 py-4">
+                <div>
+                  <p className="font-mono font-bold text-gray-900">{c.code}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Received {formatDate(c.created_at, "MMM d, yyyy h:mm a")}</p>
+                  {!canRedeem && (
+                    <p className="text-xs font-semibold text-orange-600 mt-1 flex items-center gap-1">
+                      <Clock className="w-3 h-3" /> Unlocks in {formatTime(lockSeconds - REDEEM_UNLOCK_THRESHOLD)}
+                    </p>
+                  )}
                 </div>
-              );
-            })}
+                <div className="flex items-center gap-2">
+                  <Button size="sm" variant="outline" onClick={() => copyCode(c.code)}>
+                    <Copy className="w-3.5 h-3.5" /> Copy
+                  </Button>
+                  <Button
+                    size="sm"
+                    disabled={!canRedeem || redeemBusyId === c.id}
+                    className={!canRedeem
+                      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                      : "bg-gradient-to-r from-violet-500 to-purple-600 text-white"}
+                    onClick={() => handleRedeem(c)}
+                  >
+                    {redeemBusyId === c.id ? "Redeeming..." : "Redeem"} {canRedeem && <ArrowRight className="w-3.5 h-3.5" />}
+                  </Button>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
