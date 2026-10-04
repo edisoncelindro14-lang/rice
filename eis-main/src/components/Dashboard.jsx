@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Wallet, ArrowRight, KeyRound, ChevronDown, ChevronUp, Ticket, Clock, AlertCircle, Share2, Check, FileText, Users, ShoppingBag } from "lucide-react";
+import { Wallet, ArrowRight, KeyRound, ChevronDown, ChevronUp, Ticket, Clock, Share2, Check, FileText, Users, ShoppingBag } from "lucide-react";
 import toast from "react-hot-toast";
 import { useTable, useCurrentMember, createRecord } from "../lib/useData";
 import { supabase } from "../lib/supabase";
@@ -46,13 +46,7 @@ export default function Dashboard() {
   const withdrawals = myTx.filter(t => t.type === "withdrawal").sort((a, b) => new Date(b.created_date || b.created_at) - new Date(a.created_date || a.created_at));
   const myRedeemedCodes = allCodes.filter(c => c.is_used && c.used_by_member_id === currentMember?.id).sort((a, b) => new Date(b.used_at) - new Date(a.used_at));
 
-  const profileComplete = currentMember?.gcash_number && currentMember?.gcash_name && currentMember?.phone && currentMember?.address;
-
   async function handleWithdraw() {
-    if (!profileComplete) {
-      toast.error("Please fill in your GCash details, phone, and address in My Profile.");
-      return;
-    }
     if (withdrawValue < minAmount) {
       toast.error(`Minimum withdrawal is ₱${minAmount.toLocaleString()}.`);
       return;
@@ -215,13 +209,7 @@ export default function Dashboard() {
                 <p className="text-emerald-100 text-xs mt-1">Minimum withdrawal: ₱{minAmount.toLocaleString()}</p>
               </div>
             </div>
-            {!profileComplete && (
-              <div className="mt-5 bg-white/20 rounded-2xl px-4 py-3 flex items-center gap-2 text-sm text-white">
-                <AlertCircle className="w-4 h-4 shrink-0" />
-                <span>Complete your profile (GCash, phone, address) to withdraw — <Link to="/Profile" className="underline font-semibold">My Profile</Link></span>
-              </div>
-            )}
-            {profileComplete && availableBalance >= minAmount && !pendingWithdrawal && (
+            {availableBalance >= minAmount && !pendingWithdrawal && (
               <div className="mt-5 bg-white/20 rounded-2xl px-4 py-3 text-sm text-white space-y-2">
                 <p className="font-bold">📋 Enter withdrawal amount</p>
                 <input
@@ -261,7 +249,7 @@ export default function Dashboard() {
                 </div>
               ) : (
                 <>
-                  <Button onClick={handleWithdraw} disabled={withdrawValue < minAmount || withdrawValue > availableBalance || !profileComplete}
+                  <Button onClick={handleWithdraw} disabled={withdrawValue < minAmount || withdrawValue > availableBalance}
                     className="bg-white text-emerald-700 hover:bg-emerald-50 font-bold text-base px-8 py-4 h-auto rounded-2xl shadow-lg disabled:opacity-100 disabled:text-gray-600">
                     <Wallet className="w-5 h-5 mr-2" /> Withdraw Now
                 </Button>
