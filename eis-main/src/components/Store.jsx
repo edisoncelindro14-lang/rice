@@ -4,7 +4,7 @@ import { Store as StoreIcon, Ticket, Calendar, Copy, History, Key, X } from "luc
 import toast from "react-hot-toast";
 import { useTable, useCurrentMember } from "../lib/useData";
 import { supabase } from "../lib/supabase";
-import { formatDate } from "../lib/helpers";
+import { formatDate, maintenanceStatus } from "../lib/helpers";
 import { storeQuotaSummary, generateStoreCodes } from "../lib/storeQuota";
 import { redeemCodeForMember } from "../lib/redeem";
 import StorePhonebook from "./StorePhonebook";
@@ -52,6 +52,13 @@ export default function Store() {
     if (!target) { toast.error("Select a username"); return; }
     const member = members.find(m => m.username === target);
     if (!member) { toast.error("Username not found"); return; }
+    const status = maintenanceStatus(member, codes);
+    if (status.isGreen && status.secondsLeft > 0) {
+      const h = Math.floor(status.secondsLeft / 3600);
+      const m = Math.floor((status.secondsLeft % 3600) / 60);
+      toast.error(`Cannot redeem — maintenance cycle still active (${h}h ${m}m remaining)`);
+      return;
+    }
     setRedeemModal(member);
     setRedeemCodeInput("");
   }
