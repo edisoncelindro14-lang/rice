@@ -125,7 +125,7 @@ export default function CodeCabinet() {
         {pending.length === 0 ? (
           <p className="text-center py-10 text-gray-400">No codes assigned to you yet. When a store sends you a code, it will appear here.</p>
         ) : (
-          <div className="divide-y divide-gray-50">
+          <div className="divide-y divide-gray-50 max-h-[400px] overflow-y-auto">
             {pending.map(c => (
               <div key={c.id} className="flex items-center justify-between px-6 py-4">
                 <div>
@@ -164,7 +164,7 @@ export default function CodeCabinet() {
           <div className="p-6 border-b border-gray-100">
             <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2"><History className="w-5 h-5 text-violet-500" /> Redemption History</h2>
           </div>
-          <div className="divide-y divide-gray-50">
+          <div className="divide-y divide-gray-50 max-h-[400px] overflow-y-auto">
             {myHistory.map(h => (
               <div key={h.id} className="flex items-center justify-between px-6 py-4">
                 <div>
@@ -184,7 +184,7 @@ export default function CodeCabinet() {
           <div className="p-6 border-b border-gray-100">
             <h2 className="text-lg font-bold text-gray-500">Redeemed Codes</h2>
           </div>
-          <div className="divide-y divide-gray-50">
+          <div className="divide-y divide-gray-50 max-h-[400px] overflow-y-auto">
             {redeemed.map(c => (
               <div key={c.id} className="flex items-center justify-between px-6 py-4">
                 <div>
