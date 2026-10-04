@@ -40,12 +40,12 @@ export default function Genealogy() {
 
   // Navigate to a member: push current selection onto history stack, reset pan to top.
   const selectMember = useCallback((member) => {
-    setSelected(prev => {
-      if (prev && prev.id !== member.id) setHistory(h => [...h, prev]);
-      return member;
-    });
+    if (selected && selected.id !== member.id) {
+      setHistory(h => [...h, selected]);
+    }
+    setSelected(member);
     setPan({ x: 0, y: 0 });
-  }, []);
+  }, [selected]);
 
   // Go back to the previous member in history.
   const goBack = useCallback(() => {
