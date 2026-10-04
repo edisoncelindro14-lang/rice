@@ -22,6 +22,7 @@ export default function Store() {
   const [redeemModal, setRedeemModal] = useState(null);
   const [redeemCodeInput, setRedeemCodeInput] = useState("");
   const [redeemBusy, setRedeemBusy] = useState(false);
+  const [redeemUsername, setRedeemUsername] = useState("");
 
   if (!currentMember) return <div className="p-10 text-center text-gray-400">Loading...</div>;
   if (currentMember.role !== "store") return <div className="p-10 text-center text-gray-500">This page is only for Store accounts.</div>;
@@ -46,6 +47,15 @@ export default function Store() {
     setBusy(false);
   }
 
+  function openRedeemModal() {
+    const target = redeemUsername.trim().replace(/^@/, "");
+    if (!target) { toast.error("Select a username"); return; }
+    const member = members.find(m => m.username === target);
+    if (!member) { toast.error("Username not found"); return; }
+    setRedeemModal(member);
+    setRedeemCodeInput("");
+  }
+
   async function handleRedeemForMember() {
     if (!redeemModal || !redeemCodeInput.trim()) { toast.error("Enter a code"); return; }
     setRedeemBusy(true);
@@ -58,6 +68,7 @@ export default function Store() {
       toast.success(result.message);
       setRedeemModal(null);
       setRedeemCodeInput("");
+      setRedeemUsername("");
       refetchCodes();
       refetchHistory();
     } catch (err) { toast.error(err.message || "Failed to redeem code"); }
@@ -110,27 +121,15 @@ export default function Store() {
       <StorePhonebook storeId={currentMember.id} members={members} codes={codes} refetchCodes={refetchCodes} />
 
       {/* Redeem code for a member */}
-      <div className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden mb-6">
-        <div className="p-6 border-b border-gray-100"><h2 className="text-lg font-bold text-gray-900 flex items-center gap-2"><Key className="w-5 h-5 text-teal-500" /> Redeem Code for Member</h2></div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead><tr className="border-b border-gray-100">{["Username", "Status", "Action"].map(h => <th key={h} className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">{h}</th>)}</tr></thead>
-            <tbody>
-              {members.filter(m => m.role === "member").length === 0 ? (
-                <tr><td colSpan="3" className="text-center py-10 text-gray-400">No members found</td></tr>
-              ) : members.filter(m => m.role === "member").map(m => (
-                <tr key={m.id} className="border-b border-gray-50 hover:bg-gray-50">
-                  <td className="px-6 py-3 text-sm font-semibold text-gray-900">@{m.username}</td>
-                  <td className="px-6 py-3"><Badge className={m.status === "approved" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}>{m.status}</Badge></td>
-                  <td className="px-6 py-3">
-                    <Button size="sm" variant="outline" onClick={() => { setRedeemModal(m); setRedeemCodeInput(""); }}>
-                      <Key className="w-3.5 h-3.5" /> Redeem
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <div className="bg-white rounded-3xl shadow-lg border border-gray-100 p-6 mb-6">
+        <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-4"><Key className="w-5 h-5 text-teal-500" /> Redeem Code for Member</h2>
+        <div className="grid sm:grid-cols-[1fr_auto] gap-3 items-end">
+          <div>
+            <Label>Select member username</Label>
+            <Input list="store-redeem-usernames" value={redeemUsername} onChange={e => setRedeemUsername(e.target.value)} placeholder="Search username..." />
+            <datalist id="store-redeem-usernames">{usernames.map(u => <option key={u} value={u} />)}</datalist>
+          </div>
+          <Button onClick={openRedeemModal} className="bg-teal-500 hover:bg-teal-600 text-white h-10"><Key className="w-4 h-4" /> Redeem</Button>
         </div>
       </div>
 
@@ -199,11 +198,11 @@ export default function Store() {
 
       {/* Redeem Code Modal */}
       {redeemModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => { setRedeemModal(null); setRedeemCodeInput(""); }}>
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => { setRedeemModal(null); setRedeemCodeInput(""); setRedeemUsername(""); }}>
           <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full" onClick={e => e.stopPropagation()}>
             <div className="p-6 border-b border-gray-100 flex items-center justify-between">
               <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2"><Key className="w-5 h-5 text-teal-600" /> Redeem Code — {redeemModal.username}</h2>
-              <button onClick={() => { setRedeemModal(null); setRedeemCodeInput(""); }} className="p-1 rounded-lg hover:bg-gray-100"><X className="w-5 h-5 text-gray-400" /></button>
+              <button onClick={() => { setRedeemModal(null); setRedeemCodeInput(""); setRedeemUsername(""); }} className="p-1 rounded-lg hover:bg-gray-100"><X className="w-5 h-5 text-gray-400" /></button>
             </div>
             <div className="p-6 space-y-4">
               <div className="bg-teal-50 border border-teal-200 rounded-xl p-4">
@@ -215,7 +214,7 @@ export default function Store() {
               </div>
             </div>
             <div className="p-6 border-t border-gray-100 flex gap-3">
-              <Button onClick={() => { setRedeemModal(null); setRedeemCodeInput(""); }} variant="outline" className="flex-1">Cancel</Button>
+              <Button onClick={() => { setRedeemModal(null); setRedeemCodeInput(""); setRedeemUsername(""); }} variant="outline" className="flex-1">Cancel</Button>
               <Button onClick={handleRedeemForMember} disabled={redeemBusy} className="flex-1 bg-teal-500 hover:bg-teal-600 text-white">{redeemBusy ? "Redeeming..." : "Redeem Code"}</Button>
             </div>
           </div>
