@@ -23,6 +23,7 @@ export default function Store() {
   const [redeemCodeInput, setRedeemCodeInput] = useState("");
   const [redeemBusy, setRedeemBusy] = useState(false);
   const [redeemUsername, setRedeemUsername] = useState("");
+  const [phonebookVersion, setPhonebookVersion] = useState(0);
 
   if (!currentMember) return <div className="p-10 text-center text-gray-400">Loading...</div>;
   if (currentMember.role !== "store") return <div className="p-10 text-center text-gray-500">This page is only for Store accounts.</div>;
@@ -43,6 +44,7 @@ export default function Store() {
       setCount("1");
       setUsername("");
       refetchCodes();
+      setPhonebookVersion(v => v + 1);
     } catch { toast.error("Failed to generate codes"); }
     setBusy(false);
   }
@@ -78,6 +80,7 @@ export default function Store() {
       setRedeemUsername("");
       refetchCodes();
       refetchHistory();
+      setPhonebookVersion(v => v + 1);
     } catch (err) { toast.error(err.message || "Failed to redeem code"); }
     setRedeemBusy(false);
   }
@@ -125,7 +128,7 @@ export default function Store() {
       </div>
 
       {/* Phonebook — add usernames and send available codes */}
-      <StorePhonebook storeId={currentMember.id} members={members} codes={codes} refetchCodes={refetchCodes} />
+      <StorePhonebook storeId={currentMember.id} members={members} codes={codes} refetchCodes={refetchCodes} refetchTrigger={phonebookVersion} />
 
       {/* Redeem code for a member */}
       <div className="bg-white rounded-3xl shadow-lg border border-gray-100 p-6 mb-6">

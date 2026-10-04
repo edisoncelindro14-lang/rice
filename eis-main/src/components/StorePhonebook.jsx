@@ -1,13 +1,13 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { BookUser, Search, UserPlus, Send, Trash2, X, Ticket } from "lucide-react";
+import { BookUser, Search, UserPlus, Send, Trash2, X, Ticket, Clock } from "lucide-react";
 import toast from "react-hot-toast";
 import { supabase } from "../lib/supabase";
 import { useTable } from "../lib/useData";
-import { formatDate } from "../lib/helpers";
+import { formatDate, maintenanceStatus, formatTime } from "../lib/helpers";
 import { Button, Input, Label, Badge } from "./ui";
 
-export default function StorePhonebook({ storeId, members, codes, refetchCodes }) {
+export default function StorePhonebook({ storeId, members, codes, refetchCodes, refetchTrigger = 0 }) {
   const { data: phonebook = [], refetch: refetchPhonebook } = useTable("store_phonebook", {
     filter: { store_member_id: storeId },
     order: "-created_at",
@@ -17,6 +17,16 @@ export default function StorePhonebook({ storeId, members, codes, refetchCodes }
   const [phonebookSearch, setPhonebookSearch] = useState("");
   const [sendTarget, setSendTarget] = useState(null); // username being sent a code
   const [busy, setBusy] = useState(false);
+  const [now, setNow] = useState(Date.now());
+
+  // Refetch phonebook when triggered from parent (e.g. after code generation)
+  useEffect(() => { refetchPhonebook(); }, [refetchTrigger]);
+
+  // Tick every second for countdown timers
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
 
   const approvedMembers = useMemo(
     () => members.filter(m => m.role === "member"),
@@ -156,7 +166,11 @@ export default function StorePhonebook({ storeId, members, codes, refetchCodes }
             </p>
           ) : (
             <div className="space-y-2">
-              {filteredPhonebook.map(entry => (
+              {filteredPhonebook.map(entry => {
+                const member = members.find(m => m.username === entry.username);
+                const status = member ? maintenanceStatus(member, codes) : null;
+                const isActive = status?.isGreen && status.secondsLeft > 0;
+                return (
                 <div key={entry.id} className="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 bg-gradient-to-br from-teal-400 to-emerald-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
@@ -165,9 +179,15 @@ export default function StorePhonebook({ storeId, members, codes, refetchCodes }
                     <div>
                       <p className="text-sm font-medium text-gray-900">@{entry.username}</p>
                       <p className="text-xs text-gray-400">Added {formatDate(entry.created_at, "MMM d, yyyy")}</p>
+                      {isActive && (
+                        <span className="inline-flex items-center gap-1 mt-0.5 text-xs font-mono font-semibold text-emerald-600">
+                          <Clock className="w-3 h-3" /> {formatTime(status.secondsLeft)}
+                        </span>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
+                    {isActive && <Badge className="bg-green-100 text-green-700">Active</Badge>}
                     <Button
                       size="sm"
                       className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white"
@@ -184,7 +204,8 @@ export default function StorePhonebook({ storeId, members, codes, refetchCodes }
                     </button>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
           {availableCodes.length === 0 && phonebook.length > 0 && (
