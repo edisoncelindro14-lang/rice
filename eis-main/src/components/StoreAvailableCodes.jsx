@@ -89,7 +89,7 @@ export default function StoreAvailableCodes({ storeId, members, codes, refetchCo
               : "No matching usernames."}
           </p>
         ) : (
-          <div className="divide-y divide-gray-50">
+          <div className="divide-y divide-gray-50 max-h-[640px] overflow-y-auto">
             {filtered.map(c => {
               const member = members.find(m => m.username === c.assigned_username);
               const status = member ? maintenanceStatus(member, codes) : null;

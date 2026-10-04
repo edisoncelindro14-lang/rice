@@ -203,9 +203,9 @@ export default function Store() {
             <Input value={genSearch} onChange={e => setGenSearch(e.target.value)} placeholder="Search by username…" className="pl-10" />
           </div>
         </div>
-        <div className="overflow-x-auto">
+        <div className="overflow-auto max-h-[520px]">
           <table className="w-full">
-            <thead><tr className="border-b border-gray-100">{["Code", "Designated To", "Status", "Generated", "Used Date"].map(h => <th key={h} className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">{h}</th>)}</tr></thead>
+            <thead className="sticky top-0 bg-white z-10"><tr className="border-b border-gray-100">{["Code", "Designated To", "Status", "Generated", "Used Date"].map(h => <th key={h} className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">{h}</th>)}</tr></thead>
             <tbody>
               {filteredGeneratedCodes.length === 0 ? <tr><td colSpan="5" className="text-center py-10 text-gray-400">No codes found</td></tr> :
               filteredGeneratedCodes.map(c => (
