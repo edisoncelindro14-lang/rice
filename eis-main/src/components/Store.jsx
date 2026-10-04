@@ -7,7 +7,6 @@ import { supabase } from "../lib/supabase";
 import { formatDate, maintenanceStatus } from "../lib/helpers";
 import { storeQuotaSummary, generateStoreCodes } from "../lib/storeQuota";
 import { redeemCodeForMember } from "../lib/redeem";
-import StorePhonebook from "./StorePhonebook";
 import StoreAvailableCodes from "./StoreAvailableCodes";
 import { Button, Input, Label, Badge } from "./ui";
 
@@ -127,9 +126,6 @@ export default function Store() {
         </div>
         {q.remaining < 1 && <p className="text-sm text-red-500 mt-3">No remaining codes. Ask the admin to add more.</p>}
       </div>
-
-      {/* Storebook — add usernames and send available codes */}
-      <StorePhonebook storeId={currentMember.id} members={members} codes={codes} refetchCodes={refetchCodes} refetchTrigger={phonebookVersion} />
 
       {/* Available codes designated to members — searchable list */}
       <StoreAvailableCodes
