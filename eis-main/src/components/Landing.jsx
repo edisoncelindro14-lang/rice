@@ -8,7 +8,7 @@ const STATS = [
   { label: "Active Members", value: "Growing" },
   { label: "Total Paid Out", value: "More" },
   { label: "Mamlakah Levels", value: "5 Levels" },
-  { label: "Max Downlines", value: "10 Direct" },
+  { label: "Max Downlines", value: "8 Direct" },
 ];
 
 const CROWN_URL = "https://media.base44.com/images/public/69f351e73d5a6169e8e9b7a5/8f5ae6bbe_Untitled11.png";

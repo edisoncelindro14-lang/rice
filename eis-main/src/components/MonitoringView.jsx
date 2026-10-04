@@ -17,10 +17,10 @@ export default function MonitoringView({ member, members, codes }) {
 
   const downlines = members.filter(m => m.referrer_id === member.id && m.status === "approved");
   const slotsFilled = downlines.length;
-  const maxSlots = 10;
+  const maxSlots = 8;
 
   // Cycle logic: each member's first cycle starts when they're approved.
-  // A cycle is "complete" when all 10 slots are filled AND all have redeemed.
+  // A cycle is "complete" when all 8 slots are filled AND all have redeemed.
   // For simplicity, current cycle = completed cycles + 1.
   const redeemedThisCycle = downlines.filter(d => maintenanceStatus(d, codes).isGreen).length;
   const completedCycles = 0; // no cycle-completion tracking yet
@@ -101,7 +101,7 @@ export default function MonitoringView({ member, members, codes }) {
         className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden"
       >
         <div className="p-6 border-b border-gray-100">
-          <h3 className="text-lg font-bold text-gray-900">Downline Slots (1–10)</h3>
+          <h3 className="text-lg font-bold text-gray-900">Downline Slots (1–8)</h3>
         </div>
 
         {downlines.length === 0 ? (

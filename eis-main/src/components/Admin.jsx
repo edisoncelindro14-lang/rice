@@ -236,7 +236,7 @@ export default function Admin() {
       const referrer = members.find(m => m.id === member.referrer_id);
       let placementId = null;
       if (referrer) {
-        const available = [referrer, ...findDownline(referrer.id)].find(m => (m.direct_downlines_count || 0) < 10);
+        const available = [referrer, ...findDownline(referrer.id)].find(m => (m.direct_downlines_count || 0) < 8);
         placementId = available?.id || null;
       }
       const treeLevel = placementId ? (members.find(m => m.id === placementId)?.tree_level || 0) + 1 : 1;
@@ -613,7 +613,7 @@ export default function Admin() {
                     </div>
                     <div className="text-right">
                       <p className="text-xs text-gray-400">Downlines</p>
-                      <p className="text-sm font-bold text-gray-900">{getDirectDownlineCount(m.id)}/10</p>
+                      <p className="text-sm font-bold text-gray-900">{getDirectDownlineCount(m.id)}/8</p>
                     </div>
                   </div>
                   {/* Action pills */}
@@ -1564,7 +1564,7 @@ export default function Admin() {
                     className="w-full h-12 rounded-xl border border-gray-200 px-4 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20">
                     <option value="">None (root — no sponsor)</option>
                     {approvedMembers.filter(m => m.id !== sponsorModal.member?.id).map(m => (
-                      <option key={m.id} value={m.id}>{m.full_name} (@{m.username}) — {m.direct_downlines_count || 0}/10 downlines</option>
+                      <option key={m.id} value={m.id}>{m.full_name} (@{m.username}) — {m.direct_downlines_count || 0}/8 downlines</option>
                     ))}
                   </select>
                 </div>

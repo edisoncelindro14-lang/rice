@@ -45,7 +45,7 @@ export default function LevelBonuses() {
         className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-3xl p-6 text-white mb-8 shadow-xl">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
           <div><p className="text-indigo-200 text-sm">Mamlakah Levels</p><p className="text-4xl font-extrabold">5</p></div>
-          <div><p className="text-indigo-200 text-sm">Max Downlines per Member</p><p className="text-4xl font-extrabold">10</p></div>
+          <div><p className="text-indigo-200 text-sm">Max Downlines per Member</p><p className="text-4xl font-extrabold">8</p></div>
           <div><p className="text-indigo-200 text-sm">Total Maximum Earnings</p><p className="text-4xl font-extrabold">{money(totalMax)}</p></div>
         </div>
       </motion.div>
@@ -90,7 +90,7 @@ export default function LevelBonuses() {
         className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-3xl p-6 text-white mt-8 shadow-xl">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
           <div><p className="text-indigo-200 text-sm">Mamlakah Levels</p><p className="text-4xl font-extrabold">5</p></div>
-          <div><p className="text-indigo-200 text-sm">Max Downlines per Member</p><p className="text-4xl font-extrabold">10</p></div>
+          <div><p className="text-indigo-200 text-sm">Max Downlines per Member</p><p className="text-4xl font-extrabold">8</p></div>
           <div><p className="text-indigo-200 text-sm">Total Maximum Earnings</p><p className="text-4xl font-extrabold">{money(totalMax)}</p></div>
         </div>
       </motion.div>

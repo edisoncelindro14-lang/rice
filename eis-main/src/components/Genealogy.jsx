@@ -74,8 +74,8 @@ export default function Genealogy() {
     const isRoot = level === 0;
     const status = maintenanceStatus(member, codes);
     const isActive = status.isGreen;
-    const slots = `${downlines.length}/10`;
-    const canPlace = lobbyMembers.length > 0 && downlines.length < 10;
+    const slots = `${downlines.length}/8`;
+    const canPlace = lobbyMembers.length > 0 && downlines.length < 8;
 
     return (
       <div className="flex flex-col items-center">
@@ -130,7 +130,7 @@ export default function Genealogy() {
           <div className="relative h-1.5 rounded-full bg-white/15 overflow-hidden">
             <div
               className={`h-full rounded-full transition-all duration-500 ${isActive ? "bg-white/80" : "bg-white/50"}`}
-              style={{ width: `${(downlines.length / 10) * 100}%` }}
+              style={{ width: `${(downlines.length / 8) * 100}%` }}
             />
           </div>
 
@@ -151,7 +151,7 @@ export default function Genealogy() {
             <div className="w-1 h-6 rounded-full bg-gradient-to-b from-emerald-400 to-blue-500" />
             {/* Children row */}
             <div className="flex flex-nowrap justify-center gap-4">
-              {downlines.slice(0, 10).map((d, i, arr) => {
+              {downlines.slice(0, 8).map((d, i, arr) => {
                 const isOnly = arr.length === 1;
                 const isFirst = i === 0;
                 const isLast = i === arr.length - 1;
@@ -298,7 +298,7 @@ export default function Genealogy() {
           </div>
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Mamlakah Tree</h1>
-            <p className="text-gray-500">{isSuperAdmin ? "Full network — up to 10 downlines per member" : "5-level network — up to 10 downlines per member"}</p>
+            <p className="text-gray-500">{isSuperAdmin ? "Full network — up to 8 downlines per member" : "5-level network — up to 8 downlines per member"}</p>
           </div>
         </div>
       </motion.div>
@@ -370,7 +370,7 @@ export default function Genealogy() {
                   <span className={`w-2 h-2 rounded-full flex-shrink-0 ${isActive ? "bg-green-500" : "bg-red-500"}`} />
                   <div className="min-w-0">
                     <p className="font-medium text-gray-900 text-sm truncate">{m.username || m.full_name}</p>
-                    <p className="text-xs text-gray-400 truncate">{isSuperAdmin ? `L${m.tree_level || 0}` : (m.id === currentMember?.id ? "You" : `L${(m.tree_level || 0) - (currentMember?.tree_level || 0)}`)} · {m.direct_downlines_count || 0}/10</p>
+                    <p className="text-xs text-gray-400 truncate">{isSuperAdmin ? `L${m.tree_level || 0}` : (m.id === currentMember?.id ? "You" : `L${(m.tree_level || 0) - (currentMember?.tree_level || 0)}`)} · {m.direct_downlines_count || 0}/8</p>
                   </div>
                 </button>
               );
