@@ -5,6 +5,8 @@ import { GitBranch, Search, ArrowRight, Users, ZoomIn, ZoomOut, User, Clock, Act
 import { useTable, useCurrentMember, updateRecord } from "../lib/useData";
 import { Button } from "./ui";
 import { maintenanceStatus, formatTime } from "../lib/helpers";
+import { distributePlacementCommissions } from "../lib/commissions";
+import { supabase } from "../lib/supabase";
 import toast from "react-hot-toast";
 
 export default function Genealogy() {
@@ -208,7 +210,17 @@ export default function Genealogy() {
         direct_downlines_count: (placementTarget.direct_downlines_count || 0) + 1,
       });
       if (countError) console.error("Failed to update downline count:", countError.message);
-      toast.success(`${lobbyMember.username} placed under ${placementTarget.username}`);
+      // If the member already redeemed a code while in the lobby, distribute commissions now
+      const { data: freshMembers } = await supabase.from("members").select("*");
+      const { data: freshCodes } = await supabase.from("maintenance_codes").select("*");
+      const placedMember = (freshMembers || members).find(m => m.id === lobbyMember.id);
+      if (placedMember) {
+        const count = await distributePlacementCommissions(placedMember, freshMembers || members, freshCodes || codes);
+        if (count > 0) toast.success(`${lobbyMember.username} placed under ${placementTarget.username}. ${count} upline bonus(es) distributed.`);
+        else toast.success(`${lobbyMember.username} placed under ${placementTarget.username}`);
+      } else {
+        toast.success(`${lobbyMember.username} placed under ${placementTarget.username}`);
+      }
       setPlacementTarget(null);
       await refetchMembers();
     } catch (err) {

@@ -12,6 +12,7 @@ import { useTable, updateRecord, createRecord, deleteRecord } from "../lib/useDa
 import { supabase } from "../lib/supabase";
 import { getSessionMemberId } from "../lib/auth";
 import { money, formatDate, generateReferralCode, maintenanceStatus, formatTime, LEVEL_CONFIG, MAX_BONUS_LEVEL } from "../lib/helpers";
+import { distributePlacementCommissions } from "../lib/commissions";
 import { Button, Input, Label, Badge } from "./ui";
 import Genealogy from "./Genealogy";
 import MonitoringView from "./MonitoringView";
@@ -250,7 +251,17 @@ export default function Admin() {
         const p = members.find(m => m.id === placementId);
         if (p) await updateRecord("members", p.id, { direct_downlines_count: (p.direct_downlines_count || 0) + 1 });
       }
-      toast.success("Member approved & placed");
+      // If the member already redeemed a code while in the lobby, distribute commissions now
+      const { data: freshCodes } = await supabase.from("maintenance_codes").select("*");
+      const { data: freshMembers } = await supabase.from("members").select("*");
+      const placedMember = (freshMembers || members).find(m => m.id === id);
+      if (placedMember) {
+        const count = await distributePlacementCommissions(placedMember, freshMembers || members, freshCodes || codes);
+        if (count > 0) toast.success(`Member approved & placed. ${count} upline bonus(es) distributed.`);
+        else toast.success("Member approved & placed");
+      } else {
+        toast.success("Member approved & placed");
+      }
       window.location.reload();
     } catch { toast.error("Failed to approve member"); }
   }
