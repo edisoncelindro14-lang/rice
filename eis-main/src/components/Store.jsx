@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Store as StoreIcon, Ticket, Calendar, Copy, History } from "lucide-react";
+import { Store as StoreIcon, Ticket, Calendar, Copy, History, Key, X } from "lucide-react";
 import toast from "react-hot-toast";
 import { useTable, useCurrentMember } from "../lib/useData";
+import { supabase } from "../lib/supabase";
 import { formatDate } from "../lib/helpers";
 import { storeQuotaSummary, generateStoreCodes } from "../lib/storeQuota";
+import { redeemCodeForMember } from "../lib/redeem";
 import StorePhonebook from "./StorePhonebook";
 import { Button, Input, Label, Badge } from "./ui";
 
@@ -12,11 +14,14 @@ export default function Store() {
   const { data: members = [] } = useTable("members");
   const { data: codes = [], refetch: refetchCodes } = useTable("maintenance_codes");
   const { data: quotas = [] } = useTable("store_code_quotas");
-  const { data: redemptionHistory = [] } = useTable("code_redemption_history");
+  const { data: redemptionHistory = [], refetch: refetchHistory } = useTable("code_redemption_history");
   const { currentMember } = useCurrentMember(members);
   const [count, setCount] = useState("1");
   const [username, setUsername] = useState("");
   const [busy, setBusy] = useState(false);
+  const [redeemModal, setRedeemModal] = useState(null);
+  const [redeemCodeInput, setRedeemCodeInput] = useState("");
+  const [redeemBusy, setRedeemBusy] = useState(false);
 
   if (!currentMember) return <div className="p-10 text-center text-gray-400">Loading...</div>;
   if (currentMember.role !== "store") return <div className="p-10 text-center text-gray-500">This page is only for Store accounts.</div>;
@@ -39,6 +44,24 @@ export default function Store() {
       refetchCodes();
     } catch { toast.error("Failed to generate codes"); }
     setBusy(false);
+  }
+
+  async function handleRedeemForMember() {
+    if (!redeemModal || !redeemCodeInput.trim()) { toast.error("Enter a code"); return; }
+    setRedeemBusy(true);
+    try {
+      const member = redeemModal;
+      const { data: found, error } = await supabase
+        .from("maintenance_codes").select("*").ilike("code", redeemCodeInput.replace(/[%_\\]/g, c => `\\${c}`)).eq("is_used", false).limit(1);
+      if (error || !found?.length) { toast.error("Invalid or already used code"); setRedeemBusy(false); return; }
+      const result = await redeemCodeForMember(found[0], member, members, codes);
+      toast.success(result.message);
+      setRedeemModal(null);
+      setRedeemCodeInput("");
+      refetchCodes();
+      refetchHistory();
+    } catch (err) { toast.error(err.message || "Failed to redeem code"); }
+    setRedeemBusy(false);
   }
 
   return (
@@ -85,6 +108,31 @@ export default function Store() {
 
       {/* Phonebook — add usernames and send available codes */}
       <StorePhonebook storeId={currentMember.id} members={members} codes={codes} refetchCodes={refetchCodes} />
+
+      {/* Redeem code for a member */}
+      <div className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden mb-6">
+        <div className="p-6 border-b border-gray-100"><h2 className="text-lg font-bold text-gray-900 flex items-center gap-2"><Key className="w-5 h-5 text-teal-500" /> Redeem Code for Member</h2></div>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead><tr className="border-b border-gray-100">{["Username", "Status", "Action"].map(h => <th key={h} className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">{h}</th>)}</tr></thead>
+            <tbody>
+              {members.filter(m => m.role === "member").length === 0 ? (
+                <tr><td colSpan="3" className="text-center py-10 text-gray-400">No members found</td></tr>
+              ) : members.filter(m => m.role === "member").map(m => (
+                <tr key={m.id} className="border-b border-gray-50 hover:bg-gray-50">
+                  <td className="px-6 py-3 text-sm font-semibold text-gray-900">@{m.username}</td>
+                  <td className="px-6 py-3"><Badge className={m.status === "approved" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}>{m.status}</Badge></td>
+                  <td className="px-6 py-3">
+                    <Button size="sm" variant="outline" onClick={() => { setRedeemModal(m); setRedeemCodeInput(""); }}>
+                      <Key className="w-3.5 h-3.5" /> Redeem
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       {/* Allotments from admin */}
       <div className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden mb-6">
@@ -148,6 +196,31 @@ export default function Store() {
           </table>
         </div>
       </div>
+
+      {/* Redeem Code Modal */}
+      {redeemModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => { setRedeemModal(null); setRedeemCodeInput(""); }}>
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full" onClick={e => e.stopPropagation()}>
+            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2"><Key className="w-5 h-5 text-teal-600" /> Redeem Code — {redeemModal.username}</h2>
+              <button onClick={() => { setRedeemModal(null); setRedeemCodeInput(""); }} className="p-1 rounded-lg hover:bg-gray-100"><X className="w-5 h-5 text-gray-400" /></button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="bg-teal-50 border border-teal-200 rounded-xl p-4">
+                <p className="text-sm text-teal-800">Enter a maintenance code to redeem on behalf of this member. Upline bonuses will be distributed automatically.</p>
+              </div>
+              <div>
+                <Label>Maintenance Code</Label>
+                <Input value={redeemCodeInput} onChange={e => setRedeemCodeInput(e.target.value)} placeholder="e.g. MAINT-XXXXXX" className="font-mono" />
+              </div>
+            </div>
+            <div className="p-6 border-t border-gray-100 flex gap-3">
+              <Button onClick={() => { setRedeemModal(null); setRedeemCodeInput(""); }} variant="outline" className="flex-1">Cancel</Button>
+              <Button onClick={handleRedeemForMember} disabled={redeemBusy} className="flex-1 bg-teal-500 hover:bg-teal-600 text-white">{redeemBusy ? "Redeeming..." : "Redeem Code"}</Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -50,6 +50,53 @@ export async function redeemCode(codeRecord, currentMember, allMembers, allCodes
   return { message: "Code redeemed successfully! Upline bonuses distributed." };
 }
 
+// Redeem a code on behalf of a specific member (used by Admin and Store)
+export async function redeemCodeForMember(codeRecord, member, allMembers, allCodes) {
+  if (codeRecord.assigned_username && codeRecord.assigned_username !== member.username) {
+    throw new Error(`This code is assigned to @${codeRecord.assigned_username}`);
+  }
+
+  await supabase
+    .from("maintenance_codes")
+    .update({
+      is_used: true,
+      used_by_member_id: member.id,
+      used_at: new Date().toISOString(),
+    })
+    .eq("id", codeRecord.id);
+
+  await supabase.from("transactions").insert({
+    member_id: member.id,
+    type: "maintenance_code",
+    amount: 0,
+    description: `Redeemed maintenance code: ${codeRecord.code}`,
+    status: "completed",
+  });
+
+  await supabase.from("code_redemption_history").insert({
+    code_id: codeRecord.id,
+    code: codeRecord.code,
+    redeemed_by_member_id: member.id,
+    redeemed_by_username: member.username,
+    store_member_id: codeRecord.generated_by_store_id || null,
+    redeemed_at: new Date().toISOString(),
+    status: "completed",
+  });
+
+  const { data: freshMembers } = await supabase.from("members").select("*");
+  const { data: freshCodes } = await supabase.from("maintenance_codes").select("*");
+  const allM = freshMembers || allMembers;
+  const allC = freshCodes || allCodes;
+
+  const freshMember = allM.find(m => m.id === member.id);
+  if (freshMember && freshMember.status !== "approved") {
+    return { message: "Code redeemed. Member must be placed under an upline before commissions are distributed." };
+  }
+
+  await distributeUplineBonuses(member, allM, allC, codeRecord);
+  return { message: "Code redeemed successfully! Upline bonuses distributed." };
+}
+
 async function distributeUplineBonuses(member, allMembers, allCodes, codeRecord) {
   const canEarn = (m) => {
     if (!m || m.status !== "approved") return false;
