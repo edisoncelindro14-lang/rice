@@ -11,7 +11,7 @@ export default defineConfig({
       registerType: "autoUpdate",
       includeAssets: ["pwa-192.png", "pwa-512.png", "apple-touch-icon.png"],
       manifest: {
-        name: "ProductPrime Network System",
+        name: "ProductPrime",
         short_name: "ProductPrime",
         description: "MLM genealogy and referral management platform",
         theme_color: "#f59e0b",

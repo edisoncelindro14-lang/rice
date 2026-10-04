@@ -97,7 +97,7 @@ export default function Layout({ children, currentPageName }) {
             <img src={LOGO_URL} alt="ProductPrime" className="w-10 h-10 rounded-xl object-cover" />
             <div>
               <p className="font-bold text-xl text-gray-900">ProductPrime</p>
-              <p className="text-xs text-gray-500">ProductPrime Network System</p>
+              <p className="text-xs text-gray-500">ProductPrime</p>
             </div>
           </div>
         </div>
