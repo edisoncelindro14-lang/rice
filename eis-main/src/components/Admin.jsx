@@ -513,7 +513,7 @@ export default function Admin() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `mamlakah-members-${new Date().toISOString().split("T")[0]}.csv`;
+    a.download = `productprime-members-${new Date().toISOString().split("T")[0]}.csv`;
     a.click();
     URL.revokeObjectURL(url);
     toast.success("Spreadsheet exported!");
@@ -536,7 +536,7 @@ export default function Admin() {
           </div>
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Admin Panel</h1>
-            <p className="text-gray-500">Manage mamlakah members and maintenance codes</p>
+            <p className="text-gray-500">Manage ProductPrime members and maintenance codes</p>
           </div>
         </div>
         <Button onClick={exportCSV} className="bg-teal-600 hover:bg-teal-700 text-white">
@@ -1364,7 +1364,7 @@ export default function Admin() {
                 ...(canManageTabs ? [{ key: "subadmin", label: "Sub-Admins" }] : []),
                 ...(canManageTabs ? [{ key: "product_conversion", label: "Product Conversion" }] : []),
                 { key: "terms", label: "Terms & Conditions" },
-                { key: "complan", label: "Mamlakah ComPlan" },
+                { key: "complan", label: "ProductPrime ComPlan" },
               ].map(t => (
                 <div key={t.key} className="flex items-center justify-between p-3 rounded-xl border border-gray-100">
                   <span className="font-medium text-gray-700">{t.label}</span>

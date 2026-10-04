@@ -11,8 +11,8 @@ export default defineConfig({
       registerType: "autoUpdate",
       includeAssets: ["pwa-192.png", "pwa-512.png", "apple-touch-icon.png"],
       manifest: {
-        name: "Mamlakah Network System",
-        short_name: "Mamlakah",
+        name: "ProductPrime",
+        short_name: "ProductPrime",
         description: "MLM genealogy and referral management platform",
         theme_color: "#f59e0b",
         background_color: "#ffffff",

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { GitBranch, Search, ArrowRight, Users, ZoomIn, ZoomOut, User, Clock, Activity, UserPlus, X, Heart } from "lucide-react";
+import { GitBranch, Search, ArrowRight, Users, ZoomIn, ZoomOut, User, Clock, Activity, UserPlus, X, Heart, ChevronLeft } from "lucide-react";
 import { useTable, useCurrentMember, updateRecord } from "../lib/useData";
 import { Button } from "./ui";
 import { maintenanceStatus, formatTime } from "../lib/helpers";
@@ -18,6 +18,7 @@ export default function Genealogy() {
   const dragStart = useRef(null);
   const panStart = useRef(null);
   const treeRef = useRef(null);
+  const [history, setHistory] = useState([]);
   const [placementTarget, setPlacementTarget] = useState(null);
   const [placing, setPlacing] = useState(false);
   const [, setTick] = useState(0);
@@ -36,6 +37,26 @@ export default function Genealogy() {
   useEffect(() => {
     if (currentMember && !selected) setSelected(currentMember);
   }, [currentMember]);
+
+  // Navigate to a member: push current selection onto history stack, reset pan to top.
+  const selectMember = useCallback((member) => {
+    setSelected(prev => {
+      if (prev && prev.id !== member.id) setHistory(h => [...h, prev]);
+      return member;
+    });
+    setPan({ x: 0, y: 0 });
+  }, []);
+
+  // Go back to the previous member in history.
+  const goBack = useCallback(() => {
+    setHistory(h => {
+      if (h.length === 0) return h;
+      const prev = h[h.length - 1];
+      setSelected(prev);
+      setPan({ x: 0, y: 0 });
+      return h.slice(0, -1);
+    });
+  }, []);
 
   const allApproved = useMemo(() => members.filter(m => m.status === "approved"), [members]);
   const lobbyMembers = useMemo(() => members.filter(m => m.status === "pending" && m.referrer_id === currentMember?.id), [members, currentMember?.id]);
@@ -83,7 +104,7 @@ export default function Genealogy() {
       <div className="flex flex-col items-center">
         {/* Node card */}
         <div
-          onClick={() => setSelected(member)}
+          onClick={() => selectMember(member)}
           className={`group cursor-pointer relative w-48 rounded-2xl px-3.5 py-3.5 transition-all duration-300 hover:scale-105 hover:shadow-2xl border-2 ${
             isActive
               ? "bg-gradient-to-br from-emerald-500 via-green-500 to-teal-600 border-emerald-300/50 text-white"
@@ -187,7 +208,7 @@ export default function Genealogy() {
         )}
       </div>
     );
-  }, [approvedMembers, codes, setSelected, lobbyMembers, setPlacementTarget, maxDepth]);
+  }, [approvedMembers, codes, selectMember, lobbyMembers, setPlacementTarget, maxDepth]);
 
   async function handlePlaceMember(lobbyMember) {
     setPlacing(true);
@@ -244,7 +265,7 @@ export default function Genealogy() {
           <div className="w-20 h-20 bg-gradient-to-br from-amber-500 to-orange-600 rounded-3xl mx-auto mb-6 flex items-center justify-center">
             <GitBranch className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-3">Mamlakah Tree</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-3">ProductPrime Tree</h1>
           <p className="text-gray-600 mb-6">Please login to view your genealogy.</p>
           <Link to="/MemberLogin">
             <Button className="bg-orange-500 hover:bg-orange-600 text-white text-lg px-8 py-6">Login <ArrowRight className="ml-2 w-5 h-5" /></Button>
@@ -309,7 +330,7 @@ export default function Genealogy() {
             <GitBranch className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Mamlakah Tree</h1>
+            <h1 className="text-3xl font-bold text-gray-900">ProductPrime Tree</h1>
             <p className="text-gray-500">{isSuperAdmin ? "Full network — up to 8 downlines per member" : "5-level network — up to 8 downlines per member"}</p>
           </div>
         </div>
@@ -374,7 +395,7 @@ export default function Genealogy() {
               return (
                 <button
                   key={m.id}
-                  onClick={() => { setSelected(m); setSearch(""); }}
+                  onClick={() => { selectMember(m); setSearch(""); }}
                   className={`w-full text-left px-3 py-2.5 border-b border-gray-50 last:border-0 transition-colors flex items-center gap-2 ${
                     selected?.id === m.id ? "bg-green-100" : "hover:bg-gray-50"
                   }`}
@@ -402,6 +423,11 @@ export default function Genealogy() {
               <span>Network tree — <strong className="text-gray-700">{selected?.username || selected?.full_name || "—"}</strong></span>
             </div>
             <div className="flex items-center gap-2">
+              {history.length > 0 && (
+                <button onClick={goBack} className="h-11 px-3 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center gap-1 text-white shadow-lg hover:scale-105 active:scale-95 transition-all text-sm font-bold">
+                  <ChevronLeft className="w-4 h-4" /> Back
+                </button>
+              )}
               <button onClick={() => setZoom(z => z <= 10 ? Math.max(1, z - 1) : Math.max(1, z - 10))} className="w-11 h-11 rounded-xl bg-gradient-to-br from-rose-500 to-red-600 flex items-center justify-center text-white shadow-lg hover:scale-110 active:scale-95 transition-all">
                 <ZoomOut className="w-5 h-5" />
               </button>

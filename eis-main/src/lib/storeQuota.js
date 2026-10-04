@@ -28,4 +28,21 @@ export async function generateStoreCodes(storeId, count, assignedUsername) {
   }
   const { error } = await supabase.from("maintenance_codes").insert(records);
   if (error) throw error;
+
+  // Auto-add the designated username to the store's storebook if not already there
+  if (assignedUsername) {
+    const { data: member, error: memberErr } = await supabase
+      .from("members")
+      .select("id, username")
+      .eq("username", assignedUsername)
+      .limit(1);
+    if (memberErr) console.error("storebook member lookup failed:", memberErr);
+    if (member?.length) {
+      const { error: upsertErr } = await supabase.from("store_phonebook").upsert(
+        { store_member_id: storeId, username: assignedUsername, member_id: member[0].id },
+        { onConflict: "store_member_id,username", ignoreDuplicates: true }
+      );
+      if (upsertErr) console.error("storebook upsert failed:", upsertErr);
+    }
+  }
 }

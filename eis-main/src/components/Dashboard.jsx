@@ -5,6 +5,7 @@ import { Wallet, ArrowRight, KeyRound, ChevronDown, ChevronUp, Ticket, Clock, Al
 import toast from "react-hot-toast";
 import { useTable, useCurrentMember, createRecord } from "../lib/useData";
 import { supabase } from "../lib/supabase";
+import { redeemCode } from "../lib/redeem";
 import { money, formatDate, withdrawalCharge, LEVEL_CONFIG, MAX_BONUS_LEVEL, maintenanceStatus } from "../lib/helpers";
 import { Button, Badge } from "./ui";
 
@@ -108,37 +109,8 @@ export default function Dashboard() {
         return;
       }
       const codeRecord = found[0];
-      if (codeRecord.assigned_username && codeRecord.assigned_username !== currentMember.username) {
-        toast.error(`This code is assigned to @${codeRecord.assigned_username}`);
-        setRedeemBusy(false);
-        return;
-      }
-      // Mark code as used
-      await supabase
-        .from("maintenance_codes").update({
-          is_used: true,
-          used_by_member_id: currentMember.id,
-          used_at: new Date().toISOString(),
-        }).eq("id", codeRecord.id);
-      // Record redemption as a transaction
-      await supabase.from("transactions").insert({
-        member_id: currentMember.id,
-        type: "maintenance_code",
-        amount: 0,
-        description: `Redeemed maintenance code: ${codeRecord.code}`,
-        status: "completed",
-      });
-      // Fetch fresh data so upline maintenance status is accurate (not stale from page load)
-      const { data: freshMembers } = await supabase.from("members").select("*");
-      const { data: freshCodes } = await supabase.from("maintenance_codes").select("*");
-      // Only distribute upline bonuses after the member has been placed under a chosen upline (status === "approved")
-      const freshMember = (freshMembers || members).find(m => m.id === currentMember.id);
-      if (freshMember && freshMember.status !== "approved") {
-        toast.success("Code redeemed. You must be placed under an upline before commissions are distributed.");
-      } else {
-        await distributeUplineBonuses(currentMember, freshMembers || members, freshCodes || allCodes, codeRecord);
-        toast.success("Code redeemed successfully! Upline bonuses distributed.");
-      }
+      const result = await redeemCode(codeRecord, currentMember, members, allCodes);
+      toast.success(result.message);
       setCode("");
       window.location.reload();
     } catch (err) {
@@ -225,7 +197,7 @@ export default function Dashboard() {
         <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
           Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-orange-600">{currentMember.username || "Member"}</span>
         </h1>
-        <p className="text-gray-500 mt-2">Here's your mamlakah network overview</p>
+        <p className="text-gray-500 mt-2">Here's your ProductPrime network overview</p>
       </motion.div>
 
       {/* Balance card + Maintenance code */}

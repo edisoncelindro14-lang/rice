@@ -7,12 +7,11 @@ import { Button } from "./ui";
 const STATS = [
   { label: "Active Members", value: "Growing" },
   { label: "Total Paid Out", value: "More" },
-  { label: "Mamlakah Levels", value: "5 Levels" },
+  { label: "ProductPrime Levels", value: "5 Levels" },
   { label: "Max Downlines", value: "8 Direct" },
 ];
 
-const CROWN_URL = "https://media.base44.com/images/public/69f351e73d5a6169e8e9b7a5/8f5ae6bbe_Untitled11.png";
-const LOGO_URL = "https://media.base44.com/images/public/69f351e73d5a6169e8e9b7a5/82fc320ca_ChatGPTImageApr28202608_17_52PM.png";
+const LOGO_URL = "https://media.base44.com/images/public/6ac1daab80dea63a77ad8fa1/66582b089_Firefly.png";
 const BG_URL = "https://media.base44.com/images/public/6a757d467583dc056bb9db29/acb40a8f7_pngtree-d-render-of-extruded-abstract-background-with-futuristic-black-and-gold-image_3711336.jpg";
 
 export default function Landing() {
@@ -29,8 +28,8 @@ export default function Landing() {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-black/30 backdrop-blur-xl border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src={LOGO_URL} alt="Mamlakah" className="w-10 h-10 rounded-xl object-cover" />
-            <span className="font-bold text-xl">Mamlakah</span>
+            <img src={LOGO_URL} alt="ProductPrime" className="w-10 h-10 rounded-xl object-cover" />
+            <span className="font-bold text-xl">ProductPrime</span>
           </div>
           <div className="flex items-center gap-3">
             <Link to="/MemberLogin">
@@ -56,7 +55,7 @@ export default function Landing() {
           className="relative max-w-4xl mx-auto"
         >
           <div className="flex flex-col items-center mb-6">
-            <img src={CROWN_URL} alt="Mamlakah Community" className="w-56 sm:w-72 mb-4 drop-shadow-2xl" />
+            <img src={LOGO_URL} alt="ProductPrime Community" className="w-56 sm:w-72 mb-4 drop-shadow-2xl object-contain" />
             <div className="bg-amber-500/10 border border-amber-400/40 rounded-2xl px-6 py-4 max-w-3xl text-center">
               <p className="text-amber-300 font-bold text-lg sm:text-2xl md:text-3xl leading-snug tracking-wide drop-shadow-lg">MATTHEW 6:33</p>
               <p className="text-amber-100 font-semibold italic text-base sm:text-xl md:text-2xl leading-relaxed mt-1">
@@ -66,7 +65,7 @@ export default function Landing() {
           </div>
           <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold leading-tight mb-6">
             Build Your
-            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">Mamlakah Empire</span>
+            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">ProductPrime Empire</span>
           </h1>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/Register" className="w-full sm:w-auto">
@@ -108,7 +107,7 @@ export default function Landing() {
         >
           <Crown className="w-14 h-14 text-amber-400 mx-auto mb-4" />
           <h2 className="text-4xl font-bold mb-4">Ready to Start Earning?</h2>
-          <p className="text-gray-300 text-lg mb-8">Join hundreds of members already growing their mamlakah network and earning maintenance bonuses daily.</p>
+          <p className="text-gray-300 text-lg mb-8">Join hundreds of members already growing their ProductPrime network and earning maintenance bonuses daily.</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/Register" className="w-full sm:w-auto">
               <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white text-base sm:text-lg px-8 py-5 rounded-2xl shadow-xl shadow-amber-500/30">
@@ -125,7 +124,7 @@ export default function Landing() {
       </section>
 
       <footer className="py-8 px-4 border-t border-white/10 text-center text-gray-500 text-sm">
-        © {new Date().getFullYear()} Mamlakah. All rights reserved.
+        © {new Date().getFullYear()} ProductPrime. All rights reserved.
       </footer>
     </div>
   );
