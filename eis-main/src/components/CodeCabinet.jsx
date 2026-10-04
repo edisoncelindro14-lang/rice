@@ -9,7 +9,7 @@ import { redeemCode } from "../lib/redeem";
 import { formatDate, formatTime, maintenanceStatus } from "../lib/helpers";
 import { Button, Badge } from "./ui";
 
-const REDEEM_UNLOCK_THRESHOLD = 3600; // redeem enabled when 12h maintenance countdown has ≤1h left
+const REDEEM_UNLOCK_THRESHOLD = 7200; // redeem enabled when 12h maintenance countdown has ≤2h left
 
 export default function CodeCabinet() {
   const nav = useNavigate();
@@ -73,7 +73,7 @@ export default function CodeCabinet() {
 
   async function handleRedeem(code) {
     if (!canRedeem) {
-      toast.error(`Redeem unlocks in ${formatTime(lockSeconds - REDEEM_UNLOCK_THRESHOLD)} when 1 hour remains.`);
+      toast.error(`Redeem unlocks in ${formatTime(lockSeconds - REDEEM_UNLOCK_THRESHOLD)} when 2 hours remain.`);
       return;
     }
     setRedeemBusyId(code.id);
@@ -96,7 +96,7 @@ export default function CodeCabinet() {
         </div>
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Code Cabinet</h1>
-          <p className="text-gray-500">Codes assigned to you by the store. Redemption unlocks when your 12-hour maintenance cycle has 1 hour remaining.</p>
+          <p className="text-gray-500">Codes assigned to you by the store. Redemption unlocks when your 12-hour maintenance cycle has 2 hours remaining.</p>
         </div>
       </motion.div>
 
