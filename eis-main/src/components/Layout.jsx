@@ -98,7 +98,7 @@ export default function Layout({ children, currentPageName }) {
       </div>
 
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-64 bg-gradient-to-b from-orange-500 via-orange-400/90 to-orange-200/60 border-r border-orange-300/40 flex-col z-40">
+      <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-64 bg-gradient-to-b from-orange-500 via-orange-400 to-orange-300 border-r border-orange-300/40 flex-col z-40">
         <div className="p-6 border-b border-white/20">
           <div className="flex items-center gap-3">
             <img src={LOGO_URL} alt="ProductPrime" className="w-10 h-10 rounded-xl object-cover ring-2 ring-white/40" />
@@ -123,13 +123,13 @@ export default function Layout({ children, currentPageName }) {
           })}
         </nav>
         <div className="p-4 border-t border-white/20">
-          <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-orange-600/80 to-rose-500/70 rounded-xl mb-3 shadow-sm">
+          <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-orange-600 to-rose-500 rounded-xl mb-3 shadow-sm">
             <div className="w-10 h-10 bg-white/30 rounded-full flex items-center justify-center text-white font-bold ring-2 ring-white/40">
               {(member?.username || "U").charAt(0).toUpperCase()}
             </div>
             <p className="font-medium text-white truncate flex-1">{member?.username || "Member"}</p>
           </div>
-          <button onClick={handleLogout} className="w-full flex items-center gap-2 px-4 py-3 rounded-xl text-white/80 hover:text-white hover:bg-white/20 font-medium transition-all">
+          <button onClick={handleLogout} className="w-full flex items-center gap-2 px-4 py-3 rounded-xl text-orange-900 hover:text-orange-800 hover:bg-orange-200/60 font-medium transition-all">
             <LogOut className="w-4 h-4" /> Logout
           </button>
         </div>
@@ -142,7 +142,7 @@ export default function Layout({ children, currentPageName }) {
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setMobileOpen(false)} className="fixed inset-0 bg-black/50 z-50 lg:hidden" />
             <motion.aside
               initial={{ x: "-100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }} transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed left-0 top-0 bottom-0 w-64 bg-gradient-to-b from-orange-500 via-orange-400/90 to-orange-200/60 z-50 lg:hidden flex flex-col"
+              className="fixed left-0 top-0 bottom-0 w-64 bg-gradient-to-b from-orange-500 via-orange-400 to-orange-300 z-50 lg:hidden flex flex-col"
             >
               <div className="p-6 border-b border-white/20 flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -167,13 +167,13 @@ export default function Layout({ children, currentPageName }) {
                 })}
               </nav>
               <div className="p-4 border-t border-white/20">
-                <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-orange-600/80 to-rose-500/70 rounded-xl mb-3 shadow-sm">
+                <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-orange-600 to-rose-500 rounded-xl mb-3 shadow-sm">
                   <div className="w-10 h-10 bg-white/30 rounded-full flex items-center justify-center text-white font-bold ring-2 ring-white/40">
                     {(member?.username || "U").charAt(0).toUpperCase()}
                   </div>
                   <p className="font-medium text-white truncate flex-1">{member?.username || "Member"}</p>
                 </div>
-                <button onClick={handleLogout} className="w-full flex items-center gap-2 px-4 py-3 rounded-xl text-white/80 hover:text-white hover:bg-white/20 font-bold transition-all">
+                <button onClick={handleLogout} className="w-full flex items-center gap-2 px-4 py-3 rounded-xl text-orange-900 hover:text-orange-800 hover:bg-orange-200/60 font-bold transition-all">
                   <LogOut className="w-4 h-4" /> Logout
                 </button>
               </div>
