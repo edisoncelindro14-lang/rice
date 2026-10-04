@@ -180,7 +180,7 @@ export default function Dashboard() {
       {/* Top action buttons */}
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-6 flex justify-end gap-2 sm:gap-3">
         <a href="https://forms.gle/bMLvWgG2KGfYXzBz8" target="_blank" rel="noopener noreferrer" className={termsVisible ? "" : "hidden"}>
-          <Button className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold px-4 py-2 rounded-xl text-xs sm:text-sm h-auto whitespace-nowrap">
+          <Button className="bg-green-100 hover:bg-green-200 text-green-800 font-bold px-4 py-2 rounded-xl text-xs sm:text-sm h-auto whitespace-nowrap border border-green-300">
             <FileText className="w-4 h-4 mr-1" /> Membership Terms & Conditions
           </Button>
         </a>
@@ -189,7 +189,7 @@ export default function Dashboard() {
       {/* Welcome header */}
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
         <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
-          Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-orange-600">{currentMember.username || "Member"}</span>
+          Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-rose-700">{currentMember.username || "Member"}</span>
         </h1>
         <p className="text-gray-500 mt-2">Here's your ProductPrime network overview</p>
       </motion.div>
@@ -197,16 +197,16 @@ export default function Dashboard() {
       {/* Balance card + Maintenance code */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         {/* Balance card */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="lg:col-span-2 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-3xl shadow-xl overflow-hidden">
-          <div className="p-8 bg-black">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="lg:col-span-2 bg-gradient-to-br from-[#581c87] to-[#4c0519] rounded-3xl shadow-xl overflow-hidden">
+          <div className="p-8 bg-black/10">
             <div className="flex items-center gap-6 flex-wrap">
               <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center shrink-0">
                 <Wallet className="w-8 h-8 text-white" />
               </div>
               <div className="flex-1">
-                <p className="text-emerald-100 text-base font-medium">Current Balance</p>
+                <p className="text-purple-100 text-base font-medium">Current Balance</p>
                 <p className="text-5xl font-extrabold text-white mt-1">{money(availableBalance)}</p>
-                <p className="text-emerald-100 text-xs mt-1">Minimum withdrawal: ₱{minAmount.toLocaleString()}</p>
+                <p className="text-purple-100 text-xs mt-1">Minimum withdrawal: ₱{minAmount.toLocaleString()}</p>
               </div>
             </div>
             {availableBalance >= minAmount && !pendingWithdrawal && (
@@ -250,7 +250,7 @@ export default function Dashboard() {
               ) : (
                 <>
                   <Button onClick={handleWithdraw} disabled={withdrawValue < minAmount || withdrawValue > availableBalance}
-                    className="bg-white text-emerald-700 hover:bg-emerald-50 font-bold text-base px-8 py-4 h-auto rounded-2xl shadow-lg disabled:opacity-100 disabled:text-gray-600">
+                    className="bg-pink-600 text-white hover:bg-pink-700 font-bold text-base px-8 py-4 h-auto rounded-2xl shadow-lg disabled:opacity-100 disabled:text-white/40 disabled:bg-pink-600/50">
                     <Wallet className="w-5 h-5 mr-2" /> Withdraw Now
                 </Button>
                   {productConversionVisible && (
@@ -262,7 +262,7 @@ export default function Dashboard() {
                 </>
               )}
               <Button onClick={() => setShowHistory(!showHistory)} variant="ghost"
-                className="bg-white/20 hover:bg-white/30 text-white border border-white/30 rounded-2xl">
+                className="bg-blue-600 hover:bg-blue-700 text-white border border-blue-400/50 rounded-2xl">
                 {showHistory ? <ChevronUp className="w-4 h-4 mr-2" /> : <ChevronDown className="w-4 h-4 mr-2" />} Withdrawal History
               </Button>
             </div>
@@ -273,14 +273,14 @@ export default function Dashboard() {
                   <div className="p-6">
                     <h3 className="text-white font-bold mb-4">Withdrawal History</h3>
                     {withdrawals.length === 0 ? (
-                      <p className="text-emerald-100 text-sm text-center py-4">No withdrawals yet</p>
+                      <p className="text-purple-100 text-sm text-center py-4">No withdrawals yet</p>
                     ) : (
                       <div className="space-y-3">
                         {withdrawals.map(w => (
                           <div key={w.id} className="bg-white/10 rounded-2xl px-4 py-3 flex items-center justify-between gap-4">
                             <div>
                               <p className="text-white text-sm font-semibold">Withdrawal</p>
-                              <p className="text-emerald-100 text-xs">{formatDate(w.created_date || w.created_at)}</p>
+                              <p className="text-purple-100 text-xs">{formatDate(w.created_date || w.created_at)}</p>
                             </div>
                             <div className="text-right">
                               <p className="text-white font-bold">-{money(Math.abs(w.amount || 0))}</p>
@@ -299,15 +299,15 @@ export default function Dashboard() {
 
         {/* Maintenance code redemption */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-          className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
-          <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-teal-50 to-emerald-50">
+          className="bg-white/70 backdrop-blur-md rounded-3xl shadow-lg border border-white/60 overflow-hidden">
+          <div className="p-6 border-b border-white/40 bg-gradient-to-r from-emerald-700 to-green-600">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-xl">
+              <div className="p-2 bg-white/20 rounded-xl">
                 <Ticket className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-gray-900">Maintenance Code</h2>
-                <p className="text-sm text-gray-500">Paki-Paste po sa box sa ibaba ang iyong eksaktong Code at i-click ang "Redeem Code" button</p>
+                <h2 className="text-lg font-bold text-white">Maintenance Code</h2>
+                <p className="text-sm text-emerald-50">Paki-Paste po sa box sa ibaba ang iyong eksaktong Code at i-click ang "Redeem Code" button</p>
               </div>
             </div>
           </div>
@@ -354,19 +354,19 @@ export default function Dashboard() {
       {/* Referral link */}
       {currentMember.referral_code && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-6 border border-amber-200 mb-8">
+          className="bg-gradient-to-r from-cyan-600 to-blue-800 rounded-2xl p-6 shadow-lg mb-8">
           <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl">
+            <div className="p-2 bg-white/20 rounded-xl">
               <Share2 className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h3 className="font-bold text-gray-900">Your Referral Link</h3>
-              <p className="text-sm text-gray-500">Share this link to invite new members to your network</p>
+              <h3 className="font-bold text-white">Your Referral Link</h3>
+              <p className="text-sm text-cyan-50">Share this link to invite new members to your network</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <div className="flex-1 bg-white rounded-xl px-4 py-3 border border-amber-200 text-sm text-gray-700 truncate">{referralLink}</div>
-            <Button onClick={copyReferral} className="bg-gradient-to-r from-amber-500 to-orange-600 text-white px-4 py-3 h-auto rounded-xl">
+            <div className="flex-1 bg-white/15 rounded-xl px-4 py-3 border border-white/30 text-sm text-white truncate">{referralLink}</div>
+            <Button onClick={copyReferral} className="bg-white text-blue-700 hover:bg-blue-50 px-4 py-3 h-auto rounded-xl">
               {copied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
             </Button>
           </div>
