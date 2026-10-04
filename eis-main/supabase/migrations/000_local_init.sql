@@ -63,6 +63,18 @@ create table if not exists public.maintenance_codes (
   created_at timestamptz default now()
 );
 
+-- ========== STORE CODE QUOTAS ==========
+create table if not exists public.store_code_quotas (
+  id uuid primary key default gen_random_uuid(),
+  store_member_id uuid references public.members(id) on delete cascade,
+  quota_amount int default 0,
+  set_by_admin_id uuid references public.members(id),
+  created_date timestamptz default now(),
+  updated_date timestamptz default now()
+);
+
+create index if not exists idx_store_quotas_store_member on public.store_code_quotas(store_member_id);
+
 -- ========== TRANSACTIONS ==========
 create table if not exists public.transactions (
   id uuid primary key default gen_random_uuid(),
@@ -134,7 +146,9 @@ DECLARE
     'transactions_member_id_fkey',
     'transactions_from_member_id_fkey',
     'conversion_requests_member_id_fkey',
-    'gcash_receipts_member_id_fkey'
+    'gcash_receipts_member_id_fkey',
+    'store_code_quotas_store_member_id_fkey',
+    'store_code_quotas_set_by_admin_id_fkey'
   ];
 BEGIN
   FOREACH c IN ARRAY constraints LOOP
