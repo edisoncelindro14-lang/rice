@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Store as StoreIcon, Ticket, Calendar, Copy, History, Key, X } from "lucide-react";
+import { Store as StoreIcon, Ticket, Calendar, Copy, History, Key, X, Search } from "lucide-react";
 import toast from "react-hot-toast";
 import { useTable, useCurrentMember } from "../lib/useData";
 import { supabase } from "../lib/supabase";
@@ -24,12 +24,17 @@ export default function Store() {
   const [redeemBusy, setRedeemBusy] = useState(false);
   const [redeemUsername, setRedeemUsername] = useState("");
   const [phonebookVersion, setPhonebookVersion] = useState(0);
+  const [genSearch, setGenSearch] = useState("");
 
   if (!currentMember) return <div className="p-10 text-center text-gray-400">Loading...</div>;
   if (currentMember.role !== "store") return <div className="p-10 text-center text-gray-500">This page is only for Store accounts.</div>;
 
   const q = storeQuotaSummary(currentMember.id, quotas, codes);
   const usernames = members.filter(m => m.status === "approved").map(m => m.username);
+  const genSearchQ = genSearch.trim().toLowerCase();
+  const filteredGeneratedCodes = genSearchQ
+    ? q.generatedCodes.filter(c => (c.assigned_username || "").toLowerCase().includes(genSearchQ))
+    : q.generatedCodes;
 
   async function generate() {
     const n = parseInt(count) || 0;
@@ -191,13 +196,19 @@ export default function Store() {
 
       {/* Generated codes */}
       <div className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
-        <div className="p-6 border-b border-gray-100"><h2 className="text-lg font-bold text-gray-900 flex items-center gap-2"><Ticket className="w-5 h-5 text-amber-500" /> My Generated Codes</h2></div>
+        <div className="p-6 border-b border-gray-100">
+          <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-3"><Ticket className="w-5 h-5 text-amber-500" /> My Generated Codes</h2>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input value={genSearch} onChange={e => setGenSearch(e.target.value)} placeholder="Search by username…" className="pl-10" />
+          </div>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead><tr className="border-b border-gray-100">{["Code", "Designated To", "Status", "Generated", "Used Date"].map(h => <th key={h} className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">{h}</th>)}</tr></thead>
             <tbody>
-              {q.generatedCodes.length === 0 ? <tr><td colSpan="5" className="text-center py-10 text-gray-400">No codes generated yet</td></tr> :
-              q.generatedCodes.map(c => (
+              {filteredGeneratedCodes.length === 0 ? <tr><td colSpan="5" className="text-center py-10 text-gray-400">No codes found</td></tr> :
+              filteredGeneratedCodes.map(c => (
                 <tr key={c.id} className="border-b border-gray-50 hover:bg-gray-50">
                   <td className="px-6 py-3 text-sm font-mono font-bold text-gray-900">
                     <button onClick={() => { navigator.clipboard.writeText(c.code); toast.success("Copied"); }} className="inline-flex items-center gap-1 hover:text-teal-600">{c.code} <Copy className="w-3 h-3" /></button>
