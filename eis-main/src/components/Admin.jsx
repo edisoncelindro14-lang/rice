@@ -5,16 +5,18 @@ import {
   Eye, EyeOff, DollarSign, Trash2, RotateCcw, UserCog, GitBranch, Search,
   Download, Copy, Crown, ArrowRight, ChevronDown, X as XIcon, FileText,
   Key, Clock, Lock, Pencil, User, Save, Upload, Image as ImageIcon,
-  UserPlus, ArrowLeft, ShoppingBag,
+  UserPlus, ArrowLeft, ShoppingBag, Store,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useTable, updateRecord, createRecord, deleteRecord } from "../lib/useData";
 import { supabase } from "../lib/supabase";
 import { getSessionMemberId } from "../lib/auth";
 import { money, formatDate, generateReferralCode, maintenanceStatus, formatTime, LEVEL_CONFIG, MAX_BONUS_LEVEL } from "../lib/helpers";
+import { distributePlacementCommissions } from "../lib/commissions";
 import { Button, Input, Label, Badge } from "./ui";
 import Genealogy from "./Genealogy";
 import MonitoringView from "./MonitoringView";
+import AdminStoreTab from "./AdminStoreTab";
 
 export default function Admin() {
   const [tab, setTab] = useState("members");
@@ -56,6 +58,7 @@ export default function Admin() {
   const { data: settings = [] } = useTable("system_settings");
   const { data: transactions = [] } = useTable("transactions");
   const { data: receipts = [] } = useTable("gcash_receipts");
+  const { data: storeQuotas = [], refetch: refetchQuotas } = useTable("store_code_quotas");
 
   useEffect(() => {
     const map = {};
@@ -141,6 +144,7 @@ export default function Admin() {
     ...(deletedMembers.length > 0 ? [{ id: "deleted", label: `Deleted (${deletedMembers.length})`, icon: Trash2, active: "from-red-500 to-rose-600", inactive: "bg-red-50 text-red-700 border-red-200 hover:bg-red-100" }] : []),
     ...(canManageTabs ? [{ id: "roles", label: "Roles", icon: UserCog, active: "from-fuchsia-500 to-pink-600", inactive: "bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200 hover:bg-fuchsia-100" }] : []),
     ...(tabVisibility.subadmin ? [{ id: "subadmins", label: "Sub-Admins", icon: Shield, active: "from-emerald-500 to-green-600", inactive: "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100" }] : []),
+    { id: "store", label: "Store", icon: Store, active: "from-teal-500 to-cyan-600", inactive: "bg-teal-50 text-teal-700 border-teal-200 hover:bg-teal-100" },
     { id: "settings", label: "Settings", icon: Settings, active: "from-slate-500 to-gray-600", inactive: "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100" },
     { id: "profile", label: "My Profile", icon: User, active: "from-violet-500 to-indigo-600", inactive: "bg-violet-50 text-violet-700 border-violet-200 hover:bg-violet-100" },
   ];
@@ -236,7 +240,7 @@ export default function Admin() {
       const referrer = members.find(m => m.id === member.referrer_id);
       let placementId = null;
       if (referrer) {
-        const available = [referrer, ...findDownline(referrer.id)].find(m => (m.direct_downlines_count || 0) < 10);
+        const available = [referrer, ...findDownline(referrer.id)].find(m => (m.direct_downlines_count || 0) < 8);
         placementId = available?.id || null;
       }
       const treeLevel = placementId ? (members.find(m => m.id === placementId)?.tree_level || 0) + 1 : 1;
@@ -250,7 +254,17 @@ export default function Admin() {
         const p = members.find(m => m.id === placementId);
         if (p) await updateRecord("members", p.id, { direct_downlines_count: (p.direct_downlines_count || 0) + 1 });
       }
-      toast.success("Member approved & placed");
+      // If the member already redeemed a code while in the lobby, distribute commissions now
+      const { data: freshCodes } = await supabase.from("maintenance_codes").select("*");
+      const { data: freshMembers } = await supabase.from("members").select("*");
+      const placedMember = (freshMembers || members).find(m => m.id === id);
+      if (placedMember) {
+        const count = await distributePlacementCommissions(placedMember, freshMembers || members, freshCodes || codes);
+        if (count > 0) toast.success(`Member approved & placed. ${count} upline bonus(es) distributed.`);
+        else toast.success("Member approved & placed");
+      } else {
+        toast.success("Member approved & placed");
+      }
       window.location.reload();
     } catch { toast.error("Failed to approve member"); }
   }
@@ -613,7 +627,7 @@ export default function Admin() {
                     </div>
                     <div className="text-right">
                       <p className="text-xs text-gray-400">Downlines</p>
-                      <p className="text-sm font-bold text-gray-900">{getDirectDownlineCount(m.id)}/10</p>
+                      <p className="text-sm font-bold text-gray-900">{getDirectDownlineCount(m.id)}/8</p>
                     </div>
                   </div>
                   {/* Action pills */}
@@ -1169,6 +1183,8 @@ export default function Admin() {
                         {m.role === "admin" && <Button onClick={() => setRole(m.id, "member")} size="sm" variant="outline" className="border-purple-200 text-purple-600 hover:bg-purple-50 h-8 px-3 text-xs">Remove Admin</Button>}
                         {m.role !== "sub_admin" && m.role !== "admin" && <Button onClick={() => setRole(m.id, "sub_admin")} size="sm" className="bg-amber-500 text-white h-8 px-3 text-xs"><Shield className="w-3 h-3 mr-1" /> Make Sub-Admin</Button>}
                         {m.role === "sub_admin" && <Button onClick={() => setRole(m.id, "member")} size="sm" variant="outline" className="border-amber-200 text-amber-600 hover:bg-amber-50 h-8 px-3 text-xs">Remove Sub-Admin</Button>}
+                        {m.role !== "store" && m.role !== "admin" && m.role !== "sub_admin" && <Button onClick={() => setRole(m.id, "store")} size="sm" className="bg-emerald-600 text-white h-8 px-3 text-xs"><Store className="w-3 h-3 mr-1" /> Make Store</Button>}
+                        {m.role === "store" && <Button onClick={() => setRole(m.id, "member")} size="sm" variant="outline" className="border-emerald-200 text-emerald-600 hover:bg-emerald-50 h-8 px-3 text-xs">Remove Store</Button>}
                       </div>
                     </td>
                   </tr>
@@ -1322,6 +1338,12 @@ export default function Admin() {
             </div>
           )}
         </div>
+      )}
+
+      {/* Store Tab */}
+      {tab === "store" && (
+        <AdminStoreTab approvedMembers={approvedMembers} members={members} codes={codes} quotas={storeQuotas}
+          currentMemberId={currentMemberId} setRole={setRole} refetchQuotas={refetchQuotas} />
       )}
 
       {/* Settings Tab */}
@@ -1564,7 +1586,7 @@ export default function Admin() {
                     className="w-full h-12 rounded-xl border border-gray-200 px-4 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20">
                     <option value="">None (root — no sponsor)</option>
                     {approvedMembers.filter(m => m.id !== sponsorModal.member?.id).map(m => (
-                      <option key={m.id} value={m.id}>{m.full_name} (@{m.username}) — {m.direct_downlines_count || 0}/10 downlines</option>
+                      <option key={m.id} value={m.id}>{m.full_name} (@{m.username}) — {m.direct_downlines_count || 0}/8 downlines</option>
                     ))}
                   </select>
                 </div>

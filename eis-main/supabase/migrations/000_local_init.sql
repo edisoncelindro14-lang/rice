@@ -60,8 +60,21 @@ create table if not exists public.maintenance_codes (
   redeemed_by_sub_admin_id uuid references public.members(id),
   used_by_member_id uuid references public.members(id),
   used_at timestamptz,
+  generated_by_store_id uuid references public.members(id),
   created_at timestamptz default now()
 );
+
+-- ========== STORE CODE QUOTAS ==========
+-- One row per admin allotment; a store's quota is the sum of its rows.
+create table if not exists public.store_code_quotas (
+  id uuid primary key default gen_random_uuid(),
+  store_member_id uuid references public.members(id) on delete cascade,
+  quota_amount int default 0,
+  set_by_admin_id uuid references public.members(id),
+  created_date timestamptz default now()
+);
+
+create index if not exists idx_store_quotas_store_member on public.store_code_quotas(store_member_id);
 
 -- ========== TRANSACTIONS ==========
 create table if not exists public.transactions (
@@ -131,10 +144,13 @@ DECLARE
     'maintenance_codes_assigned_sub_admin_id_fkey',
     'maintenance_codes_redeemed_by_sub_admin_id_fkey',
     'maintenance_codes_used_by_member_id_fkey',
+    'maintenance_codes_generated_by_store_id_fkey',
     'transactions_member_id_fkey',
     'transactions_from_member_id_fkey',
     'conversion_requests_member_id_fkey',
-    'gcash_receipts_member_id_fkey'
+    'gcash_receipts_member_id_fkey',
+    'store_code_quotas_store_member_id_fkey',
+    'store_code_quotas_set_by_admin_id_fkey'
   ];
 BEGIN
   FOREACH c IN ARRAY constraints LOOP

@@ -36,7 +36,7 @@ export default function LevelBonuses() {
         </div>
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Mamlakah ComPlan</h1>
-          <p className="text-gray-500">5-level income structure — ₱200 from Level 1 per maintenance code redemption</p>
+          <p className="text-gray-500">5-level income structure — ₱1 per level per maintenance code redemption</p>
         </div>
       </motion.div>
 
@@ -45,7 +45,7 @@ export default function LevelBonuses() {
         className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-3xl p-6 text-white mb-8 shadow-xl">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
           <div><p className="text-indigo-200 text-sm">Mamlakah Levels</p><p className="text-4xl font-extrabold">5</p></div>
-          <div><p className="text-indigo-200 text-sm">Max Downlines per Member</p><p className="text-4xl font-extrabold">10</p></div>
+          <div><p className="text-indigo-200 text-sm">Max Downlines per Member</p><p className="text-4xl font-extrabold">8</p></div>
           <div><p className="text-indigo-200 text-sm">Total Maximum Earnings</p><p className="text-4xl font-extrabold">{money(totalMax)}</p></div>
         </div>
       </motion.div>
@@ -56,7 +56,7 @@ export default function LevelBonuses() {
         <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2"><HelpCircle className="w-5 h-5 text-indigo-500" /> How Mamlakah Bonuses Work</h2>
         <ol className="space-y-3 text-gray-700">
           <li className="flex gap-3"><span className="w-6 h-6 bg-amber-500 text-white rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">1</span> A downline member redeems a maintenance code.</li>
-          <li className="flex gap-3"><span className="w-6 h-6 bg-emerald-500 text-white rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">2</span> Level 1 bonus (₱200) goes to the referrer whose link was used; Levels 2–5 walk up the placement chain.</li>
+          <li className="flex gap-3"><span className="w-6 h-6 bg-emerald-500 text-white rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">2</span> Level 1 bonus (₱1) goes to the referrer whose link was used; Levels 2–5 walk up the placement chain.</li>
           <li className="flex gap-3"><span className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">3</span> Each upline within 5 levels receives their corresponding bonus instantly.</li>
         </ol>
       </motion.div>
@@ -90,7 +90,7 @@ export default function LevelBonuses() {
         className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-3xl p-6 text-white mt-8 shadow-xl">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
           <div><p className="text-indigo-200 text-sm">Mamlakah Levels</p><p className="text-4xl font-extrabold">5</p></div>
-          <div><p className="text-indigo-200 text-sm">Max Downlines per Member</p><p className="text-4xl font-extrabold">10</p></div>
+          <div><p className="text-indigo-200 text-sm">Max Downlines per Member</p><p className="text-4xl font-extrabold">8</p></div>
           <div><p className="text-indigo-200 text-sm">Total Maximum Earnings</p><p className="text-4xl font-extrabold">{money(totalMax)}</p></div>
         </div>
       </motion.div>

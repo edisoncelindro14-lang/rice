@@ -1,6 +1,6 @@
-// Maintenance status: 720-hour (30-day) green cycle, 120-hour (5-day) red grace period
-const MAINTENANCE_SECONDS = 2592000; // 720 hours — green banner after redeem
-const GRACE_SECONDS = 432000; // 120 hours — red banner before first redeem
+// Maintenance status: 12-hour green cycle after redeem, no timer for red banner
+const MAINTENANCE_SECONDS = 43200; // 12 hours — green banner after redeem
+const GRACE_SECONDS = 0; // no timer — red banner before first redeem
 
 export function maintenanceStatus(member, codes = []) {
   if (!member) return { isGreen: false, secondsLeft: 0, neverRedeemed: true };
@@ -18,7 +18,7 @@ export function maintenanceStatus(member, codes = []) {
     return { isGreen: left > 0, secondsLeft: Math.max(0, left), neverRedeemed: false };
   }
 
-  // User has redeemed a code — GREEN with 720h countdown from last redeem
+  // User has redeemed a code — GREEN with 12h countdown from last redeem
   const usedCodes = codes.filter(c => c.is_used && c.used_by_member_id === member.id && c.used_at);
   if (usedCodes.length > 0) {
     const lastUsed = usedCodes
@@ -28,10 +28,8 @@ export function maintenanceStatus(member, codes = []) {
     return { isGreen: left > 0, secondsLeft: left, neverRedeemed: false };
   }
 
-  // User has NOT redeemed — RED with 120h countdown from approval date
-  const since = new Date(member.approved_date || member.created_date || Date.now()).getTime();
-  const left = Math.max(0, GRACE_SECONDS - Math.floor((Date.now() - since) / 1000));
-  return { isGreen: false, secondsLeft: left, neverRedeemed: true };
+  // User has NOT redeemed — RED with no timer
+  return { isGreen: false, secondsLeft: 0, neverRedeemed: true };
 }
 
 export function formatTime(seconds) {
@@ -74,11 +72,11 @@ export function formatDate(date, fmt = "MMM d, yyyy h:mm a") {
 }
 
 export const LEVEL_CONFIG = [
-  { level: 1, label: "Level 1 — Direct Downlines", bonus_amount: 200, max_members: 10, description: "Earn ₱200 every time a downline who used your referral link redeems a maintenance code.", color: "from-amber-500 to-orange-600", bgColor: "bg-amber-50", borderColor: "border-amber-200", textColor: "text-amber-700" },
-  { level: 2, label: "Level 2 — Downlines of Downlines", bonus_amount: 100, max_members: 100, description: "Earn ₱100 every time a Level 2 downline redeems a maintenance code.", color: "from-emerald-500 to-teal-600", bgColor: "bg-emerald-50", borderColor: "border-emerald-200", textColor: "text-emerald-700" },
-  { level: 3, label: "Level 3 — Third Generation", bonus_amount: 50, max_members: 1000, description: "Earn ₱50 every time a Level 3 downline redeems a maintenance code.", color: "from-blue-500 to-indigo-600", bgColor: "bg-blue-50", borderColor: "border-blue-200", textColor: "text-blue-700" },
-  { level: 4, label: "Level 4 — Fourth Generation", bonus_amount: 20, max_members: 10000, description: "Earn ₱20 every time a Level 4 downline redeems a maintenance code.", color: "from-purple-500 to-pink-600", bgColor: "bg-purple-50", borderColor: "border-purple-200", textColor: "text-purple-700" },
-  { level: 5, label: "Level 5 — Fifth Generation", bonus_amount: 10, max_members: 100000, description: "Earn ₱10 every time a Level 5 downline redeems a maintenance code.", color: "from-rose-500 to-red-600", bgColor: "bg-rose-50", borderColor: "border-rose-200", textColor: "text-rose-700" },
+  { level: 1, label: "Level 1 — Direct Downlines", bonus_amount: 1, max_members: 8, description: "Earn ₱1 every time a downline who used your referral link redeems a maintenance code.", color: "from-amber-500 to-orange-600", bgColor: "bg-amber-50", borderColor: "border-amber-200", textColor: "text-amber-700" },
+  { level: 2, label: "Level 2 — Downlines of Downlines", bonus_amount: 1, max_members: 64, description: "Earn ₱1 every time a Level 2 downline redeems a maintenance code.", color: "from-emerald-500 to-teal-600", bgColor: "bg-emerald-50", borderColor: "border-emerald-200", textColor: "text-emerald-700" },
+  { level: 3, label: "Level 3 — Third Generation", bonus_amount: 1, max_members: 512, description: "Earn ₱1 every time a Level 3 downline redeems a maintenance code.", color: "from-blue-500 to-indigo-600", bgColor: "bg-blue-50", borderColor: "border-blue-200", textColor: "text-blue-700" },
+  { level: 4, label: "Level 4 — Fourth Generation", bonus_amount: 1, max_members: 4096, description: "Earn ₱1 every time a Level 4 downline redeems a maintenance code.", color: "from-purple-500 to-pink-600", bgColor: "bg-purple-50", borderColor: "border-purple-200", textColor: "text-purple-700" },
+  { level: 5, label: "Level 5 — Fifth Generation", bonus_amount: 1, max_members: 32768, description: "Earn ₱1 every time a Level 5 downline redeems a maintenance code.", color: "from-rose-500 to-red-600", bgColor: "bg-rose-50", borderColor: "border-rose-200", textColor: "text-rose-700" },
 ];
 
 // All 5 levels pay out income when downlines redeem maintenance codes
