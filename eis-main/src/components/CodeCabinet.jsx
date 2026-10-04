@@ -1,20 +1,32 @@
-import React, { useMemo, useEffect } from "react";
+import React, { useMemo, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Archive, Copy, KeyRound, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Archive, Copy, KeyRound, ArrowRight, CheckCircle2, Clock, History } from "lucide-react";
 import toast from "react-hot-toast";
 import { useTable, useCurrentMember } from "../lib/useData";
 import { supabase } from "../lib/supabase";
-import { formatDate } from "../lib/helpers";
+import { redeemCode } from "../lib/redeem";
+import { formatDate, formatTime } from "../lib/helpers";
 import { Button, Badge } from "./ui";
+
+const REDEEM_LOCK_SECONDS = 3600; // 1 hour countdown before a code can be redeemed
 
 export default function CodeCabinet() {
   const nav = useNavigate();
   const { data: members = [] } = useTable("members");
   const { data: codes = [], refetch: refetchCodes } = useTable("maintenance_codes");
+  const { data: redemptionHistory = [], refetch: refetchHistory } = useTable("code_redemption_history");
   const { currentMember } = useCurrentMember(members);
+  const [redeemBusyId, setRedeemBusyId] = useState(null);
+  const [now, setNow] = useState(Date.now());
 
-  // Real-time: when a code is assigned to this user, it appears automatically
+  // Tick every second for countdown timers
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  // Real-time: refetch when codes change
   useEffect(() => {
     const channel = supabase
       .channel("code_cabinet_changes")
@@ -26,9 +38,9 @@ export default function CodeCabinet() {
         refetchCodes();
       })
       .subscribe();
-    const interval = setInterval(() => refetchCodes(), 5000);
+    const interval = setInterval(() => { refetchCodes(); refetchHistory(); }, 5000);
     return () => { supabase.removeChannel(channel); clearInterval(interval); };
-  }, [refetchCodes, currentMember]);
+  }, [refetchCodes, refetchHistory, currentMember]);
 
   const myCodes = useMemo(() => {
     if (!currentMember) return [];
@@ -36,6 +48,13 @@ export default function CodeCabinet() {
       .filter(c => c.assigned_username === currentMember.username)
       .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   }, [codes, currentMember]);
+
+  const myHistory = useMemo(() => {
+    if (!currentMember) return [];
+    return redemptionHistory
+      .filter(h => h.redeemed_by_member_id === currentMember.id)
+      .sort((a, b) => new Date(b.redeemed_at) - new Date(a.redeemed_at));
+  }, [redemptionHistory, currentMember]);
 
   if (!currentMember) return <div className="p-10 text-center text-gray-400">Loading…</div>;
 
@@ -47,6 +66,29 @@ export default function CodeCabinet() {
     toast.success("Code copied! Paste it in the Maintenance Code box on your Dashboard.");
   }
 
+  function getLockSeconds(code) {
+    const elapsed = Math.floor((now - new Date(code.created_at).getTime()) / 1000);
+    return Math.max(0, REDEEM_LOCK_SECONDS - elapsed);
+  }
+
+  async function handleRedeem(code) {
+    const lock = getLockSeconds(code);
+    if (lock > 0) {
+      toast.error(`Wait ${formatTime(lock)} before redeeming this code.`);
+      return;
+    }
+    setRedeemBusyId(code.id);
+    try {
+      const result = await redeemCode(code, currentMember, members, codes);
+      toast.success(result.message);
+      refetchCodes();
+      refetchHistory();
+    } catch (err) {
+      toast.error(err.message || "Failed to redeem code");
+    }
+    setRedeemBusyId(null);
+  }
+
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-8 flex items-center gap-3">
@@ -55,7 +97,7 @@ export default function CodeCabinet() {
         </div>
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Code Cabinet</h1>
-          <p className="text-gray-500">Codes assigned to you by the store. Copy a code and paste it on your Dashboard to redeem.</p>
+          <p className="text-gray-500">Codes assigned to you by the store. Each code unlocks for redemption 1 hour after receipt.</p>
         </div>
       </motion.div>
 
@@ -85,25 +127,61 @@ export default function CodeCabinet() {
           <p className="text-center py-10 text-gray-400">No codes assigned to you yet. When a store sends you a code, it will appear here.</p>
         ) : (
           <div className="divide-y divide-gray-50">
-            {pending.map(c => (
-              <div key={c.id} className="flex items-center justify-between px-6 py-4">
-                <div>
-                  <p className="font-mono font-bold text-gray-900">{c.code}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">Received {formatDate(c.created_at, "MMM d, yyyy h:mm a")}</p>
+            {pending.map(c => {
+              const lock = getLockSeconds(c);
+              const locked = lock > 0;
+              return (
+                <div key={c.id} className="flex items-center justify-between px-6 py-4">
+                  <div>
+                    <p className="font-mono font-bold text-gray-900">{c.code}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">Received {formatDate(c.created_at, "MMM d, yyyy h:mm a")}</p>
+                    {locked && (
+                      <p className="text-xs font-semibold text-orange-600 mt-1 flex items-center gap-1">
+                        <Clock className="w-3 h-3" /> Unlocks in {formatTime(lock)}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button size="sm" variant="outline" onClick={() => copyCode(c.code)}>
+                      <Copy className="w-3.5 h-3.5" /> Copy
+                    </Button>
+                    <Button
+                      size="sm"
+                      disabled={locked || redeemBusyId === c.id}
+                      className={locked
+                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                        : "bg-gradient-to-r from-violet-500 to-purple-600 text-white"}
+                      onClick={() => handleRedeem(c)}
+                    >
+                      {redeemBusyId === c.id ? "Redeeming..." : "Redeem"} {!locked && <ArrowRight className="w-3.5 h-3.5" />}
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Button size="sm" variant="outline" onClick={() => copyCode(c.code)}>
-                    <Copy className="w-3.5 h-3.5" /> Copy
-                  </Button>
-                  <Button size="sm" className="bg-gradient-to-r from-violet-500 to-purple-600 text-white" onClick={() => nav("/Dashboard")}>
-                    Redeem <ArrowRight className="w-3.5 h-3.5" />
-                  </Button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
+
+      {/* Transaction history */}
+      {myHistory.length > 0 && (
+        <div className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden mb-6">
+          <div className="p-6 border-b border-gray-100">
+            <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2"><History className="w-5 h-5 text-violet-500" /> Redemption History</h2>
+          </div>
+          <div className="divide-y divide-gray-50">
+            {myHistory.map(h => (
+              <div key={h.id} className="flex items-center justify-between px-6 py-4">
+                <div>
+                  <p className="font-mono font-bold text-gray-700">{h.code}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Redeemed {formatDate(h.redeemed_at, "MMM d, yyyy h:mm a")}</p>
+                </div>
+                <Badge className="bg-green-100 text-green-700">Completed</Badge>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Redeemed codes */}
       {redeemed.length > 0 && (

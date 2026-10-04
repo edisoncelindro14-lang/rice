@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Store as StoreIcon, Ticket, Calendar, Copy } from "lucide-react";
+import { Store as StoreIcon, Ticket, Calendar, Copy, History } from "lucide-react";
 import toast from "react-hot-toast";
 import { useTable, useCurrentMember } from "../lib/useData";
 import { formatDate } from "../lib/helpers";
@@ -12,6 +12,7 @@ export default function Store() {
   const { data: members = [] } = useTable("members");
   const { data: codes = [], refetch: refetchCodes } = useTable("maintenance_codes");
   const { data: quotas = [] } = useTable("store_code_quotas");
+  const { data: redemptionHistory = [] } = useTable("code_redemption_history");
   const { currentMember } = useCurrentMember(members);
   const [count, setCount] = useState("1");
   const [username, setUsername] = useState("");
@@ -100,6 +101,28 @@ export default function Store() {
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Redemption transaction history */}
+      <div className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden mb-6">
+        <div className="p-6 border-b border-gray-100"><h2 className="text-lg font-bold text-gray-900 flex items-center gap-2"><History className="w-5 h-5 text-violet-500" /> Redemption History</h2></div>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead><tr className="border-b border-gray-100">{["Code", "Redeemed By", "Date", "Status"].map(h => <th key={h} className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">{h}</th>)}</tr></thead>
+            <tbody>
+              {redemptionHistory.filter(h => h.store_member_id === currentMember.id).length === 0 ? (
+                <tr><td colSpan="4" className="text-center py-10 text-gray-400">No redemptions yet</td></tr>
+              ) : redemptionHistory.filter(h => h.store_member_id === currentMember.id).sort((a, b) => new Date(b.redeemed_at) - new Date(a.redeemed_at)).map(h => (
+                <tr key={h.id} className="border-b border-gray-50 hover:bg-gray-50">
+                  <td className="px-6 py-3 text-sm font-mono font-bold text-gray-900">{h.code}</td>
+                  <td className="px-6 py-3 text-sm text-gray-600">{h.redeemed_by_username ? `@${h.redeemed_by_username}` : "—"}</td>
+                  <td className="px-6 py-3 text-sm text-gray-500">{formatDate(h.redeemed_at)}</td>
+                  <td className="px-6 py-3"><Badge className="bg-green-100 text-green-700">{h.status}</Badge></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Generated codes */}
