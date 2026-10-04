@@ -14,5 +14,10 @@ create table if not exists public.store_code_quotas (
 create index if not exists idx_store_quotas_store_member on public.store_code_quotas(store_member_id);
 
 grant select, insert, update, delete on public.store_code_quotas to anon;
+
+-- RLS policies (must match existing tables which allow all access)
+alter table public.store_code_quotas enable row level security;
+create policy "allow_all_store_code_quotas" on public.store_code_quotas for all using (true) with check (true);
+
 notify pgrst, 'reload schema';
 commit;
