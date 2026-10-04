@@ -23,7 +23,7 @@ export function MaintenanceBanner() {
   const { isGreen, secondsLeft, neverRedeemed } = status;
 
   return (
-    <div className={`w-full py-3 sm:py-2.5 px-4 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 font-semibold text-white ${isGreen ? "bg-green-500" : "bg-red-500"}`}>
+    <div className={`w-full py-3 sm:py-2.5 px-4 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3 font-semibold text-white ${isGreen ? "bg-blue-500" : "bg-black"}`}>
       {/* Status text */}
       <div className="flex items-center gap-2 sm:gap-3 text-center">
         <span className="inline-block w-3 h-3 rounded-full bg-white animate-pulse flex-shrink-0" />
@@ -39,13 +39,13 @@ export function MaintenanceBanner() {
       {/* Timer */}
       <div className="flex items-center gap-2 sm:gap-3">
         {!isGreen && secondsLeft > 0 && (
-          <span className="text-red-100 text-sm">Expires in:</span>
+          <span className="text-gray-400 text-sm">Expires in:</span>
         )}
-        <span className={`font-mono px-3 py-1 rounded-lg text-white tracking-widest text-lg font-bold ${isGreen ? "bg-green-700" : "bg-red-700"}`}>
+        <span className={`font-mono px-3 py-1 rounded-lg text-white tracking-widest text-lg font-bold ${isGreen ? "bg-blue-700" : "bg-gray-800"}`}>
           {isGreen || secondsLeft > 0 ? formatTime(secondsLeft) : "EXPIRED"}
         </span>
         {(isGreen || secondsLeft > 0) && (
-          <span className={`font-normal text-xs ${isGreen ? "text-green-100" : "text-red-100"}`}>
+          <span className={`font-normal text-xs ${isGreen ? "text-blue-100" : "text-gray-400"}`}>
             {isGreen ? "12 Hours" : "120 Hours"}
           </span>
         )}
