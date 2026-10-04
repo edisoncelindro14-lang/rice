@@ -78,7 +78,7 @@ export default function Layout({ children, currentPageName }) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-amber-50">
+    <div className="min-h-screen bg-[#fdfbf7]">
       {/* Mobile header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-xl border-b border-gray-100 z-50 px-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -91,13 +91,13 @@ export default function Layout({ children, currentPageName }) {
       </div>
 
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-64 bg-white border-r border-gray-100 flex-col z-40">
-        <div className="p-6 border-b border-gray-100">
+      <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-64 bg-[#1a3624] border-r border-white/10 flex-col z-40">
+        <div className="p-6 border-b border-white/10">
           <div className="flex items-center gap-3">
             <img src={LOGO_URL} alt="ProductPrime" className="w-10 h-10 rounded-xl object-cover" />
             <div>
-              <p className="font-bold text-xl text-gray-900">ProductPrime</p>
-              <p className="text-xs text-gray-500">ProductPrime</p>
+              <p className="font-bold text-xl text-white">ProductPrime</p>
+              <p className="text-xs text-white/50">ProductPrime</p>
             </div>
           </div>
         </div>
@@ -107,7 +107,7 @@ export default function Layout({ children, currentPageName }) {
             const active = currentPageName === item.path;
             return (
               <Link key={item.path} to={navPath(item.path)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${active ? "bg-orange-500 text-white" : "text-gray-600 hover:bg-gray-100"}`}>
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${active ? "bg-[#f58220] text-white" : "text-white/70 hover:bg-white/10 hover:text-white"}`}>
                 <Icon className="w-5 h-5" />
                 <span className="font-medium">{item.name}</span>
                 {active && <ChevronRight className="w-4 h-4 ml-auto" />}
@@ -115,14 +115,14 @@ export default function Layout({ children, currentPageName }) {
             );
           })}
         </nav>
-        <div className="p-4 border-t border-gray-100">
-          <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl mb-3">
+        <div className="p-4 border-t border-white/10">
+          <div className="flex items-center gap-3 px-4 py-3 bg-white/5 rounded-xl mb-3">
             <div className="w-10 h-10 bg-gradient-to-br from-gray-400 to-gray-600 rounded-full flex items-center justify-center text-white font-bold">
               {(member?.username || "U").charAt(0).toUpperCase()}
             </div>
-            <p className="font-medium text-gray-900 truncate flex-1">{member?.username || "Member"}</p>
+            <p className="font-medium text-white truncate flex-1">{member?.username || "Member"}</p>
           </div>
-          <button onClick={handleLogout} className="w-full flex items-center gap-2 px-4 py-3 rounded-xl text-gray-600 hover:text-red-600 hover:bg-red-50 font-medium transition-all">
+          <button onClick={handleLogout} className="w-full flex items-center gap-2 px-4 py-3 rounded-xl text-white/60 hover:text-red-400 hover:bg-red-500/10 font-medium transition-all">
             <LogOut className="w-4 h-4" /> Logout
           </button>
         </div>
@@ -135,14 +135,14 @@ export default function Layout({ children, currentPageName }) {
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setMobileOpen(false)} className="fixed inset-0 bg-black/50 z-50 lg:hidden" />
             <motion.aside
               initial={{ x: "-100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }} transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed left-0 top-0 bottom-0 w-64 bg-white z-50 lg:hidden flex flex-col"
+              className="fixed left-0 top-0 bottom-0 w-64 bg-[#1a3624] z-50 lg:hidden flex flex-col"
             >
-              <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+              <div className="p-6 border-b border-white/10 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <img src={LOGO_URL} alt="ProductPrime" className="w-10 h-10 rounded-xl object-cover" />
-                  <span className="font-bold text-xl text-gray-900">ProductPrime</span>
+                  <span className="font-bold text-xl text-white">ProductPrime</span>
                 </div>
-                <button onClick={() => setMobileOpen(false)} className="p-2 rounded-lg hover:bg-gray-100">
+                <button onClick={() => setMobileOpen(false)} className="p-2 rounded-lg hover:bg-white/10 text-white">
                   <X className="w-5 h-5" />
                 </button>
               </div>
@@ -152,21 +152,21 @@ export default function Layout({ children, currentPageName }) {
                   const active = currentPageName === item.path;
                   return (
                     <Link key={item.path} to={navPath(item.path)} onClick={() => setMobileOpen(false)}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${active ? "bg-orange-500 text-white" : "text-gray-600 hover:bg-gray-100"}`}>
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${active ? "bg-[#f58220] text-white" : "text-white/70 hover:bg-white/10 hover:text-white"}`}>
                       <Icon className="w-5 h-5" />
                       <span className="font-medium">{item.name}</span>
                     </Link>
                   );
                 })}
               </nav>
-              <div className="p-4 border-t border-gray-100">
-                <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl mb-3">
+              <div className="p-4 border-t border-white/10">
+                <div className="flex items-center gap-3 px-4 py-3 bg-white/5 rounded-xl mb-3">
                   <div className="w-10 h-10 bg-gradient-to-br from-gray-400 to-gray-600 rounded-full flex items-center justify-center text-white font-bold">
                     {(member?.username || "U").charAt(0).toUpperCase()}
                   </div>
-                  <p className="font-medium text-gray-900 truncate flex-1">{member?.username || "Member"}</p>
+                  <p className="font-medium text-white truncate flex-1">{member?.username || "Member"}</p>
                 </div>
-                <button onClick={handleLogout} className="w-full flex items-center gap-2 px-4 py-3 rounded-xl text-gray-600 hover:text-red-600 hover:bg-red-50 font-bold transition-all">
+                <button onClick={handleLogout} className="w-full flex items-center gap-2 px-4 py-3 rounded-xl text-white/60 hover:text-red-400 hover:bg-red-500/10 font-bold transition-all">
                   <LogOut className="w-4 h-4" /> Logout
                 </button>
               </div>
