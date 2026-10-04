@@ -24,12 +24,18 @@ export default function AdminStoreTab({ approvedMembers, members, codes, quotas,
     if (!storeId) { toast.error("Select a store first"); return; }
     if (n < 1) { toast.error("Enter a valid number of codes"); return; }
     setSaving(true);
-    const { error } = await supabase.from("store_code_quotas").insert({ store_member_id: storeId, quota_amount: n, set_by_admin_id: currentMemberId });
+    try {
+      const { error } = await supabase.from("store_code_quotas").insert({ store_member_id: storeId, quota_amount: n, set_by_admin_id: currentMemberId });
+      if (error) { console.error("store_code_quotas insert error:", error); toast.error("Failed to add codes"); return; }
+      toast.success(`${n} code(s) added to @${nameOf(storeId)}`);
+      setAmount("50");
+      refetchQuotas();
+      window.location.reload();
+    } catch (err) {
+      console.error("addQuota exception:", err);
+      toast.error("Failed to add codes");
+    }
     setSaving(false);
-    if (error) { toast.error("Failed to add codes"); return; }
-    toast.success(`${n} code(s) added to @${nameOf(storeId)}`);
-    setAmount("50");
-    refetchQuotas();
   }
 
   const history = [...quotas].sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
