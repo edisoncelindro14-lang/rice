@@ -5,7 +5,7 @@ import { maintenanceStatus, formatTime, formatDate } from "../lib/helpers";
 import { redeemCodeForMember } from "../lib/redeem";
 import { Button, Input } from "./ui";
 
-const REDEEM_UNLOCK_THRESHOLD = 3600; // redeem enabled when ≤1h left on 12h cycle
+const REDEEM_UNLOCK_THRESHOLD = 0; // redeem enabled only when 12h maintenance cycle is fully expired
 
 export default function StoreAvailableCodes({ storeId, members, codes, refetchCodes, refetchHistory, onRedeemDone }) {
   const [search, setSearch] = useState("");
@@ -39,7 +39,7 @@ export default function StoreAvailableCodes({ storeId, members, codes, refetchCo
 
     const status = maintenanceStatus(member, codes);
     if (status.isGreen && status.secondsLeft > REDEEM_UNLOCK_THRESHOLD) {
-      toast.error(`Redeem unlocks in ${formatTime(status.secondsLeft - REDEEM_UNLOCK_THRESHOLD)} when 1 hour remains.`);
+      toast.error(`Redeem unlocks in ${formatTime(status.secondsLeft - REDEEM_UNLOCK_THRESHOLD)} when the 12-hour cycle ends.`);
       return;
     }
 
