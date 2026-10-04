@@ -45,9 +45,9 @@ export default function Admin() {
   const [signedUrls, setSignedUrls] = useState({});
   const [, setTick] = useState(0);
   const [subAdminSearch, setSubAdminSearch] = useState("");
-  const [quotaStoreId, setQuotaStoreId] = useState("");
-  const [quotaAmount, setQuotaAmount] = useState("");
-  const [settingQuota, setSettingQuota] = useState(false);
+  const [transferSubAdminId, setTransferSubAdminId] = useState("");
+  const [transferCodeCount, setTransferCodeCount] = useState("1");
+  const [transferring, setTransferring] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
 
   const { data: members = [] } = useTable("members");
@@ -57,7 +57,6 @@ export default function Admin() {
   const { data: settings = [] } = useTable("system_settings");
   const { data: transactions = [] } = useTable("transactions");
   const { data: receipts = [] } = useTable("gcash_receipts");
-  const { data: storeQuotas = [], refetch: refetchQuotas } = useTable("store_code_quotas");
 
   useEffect(() => {
     const map = {};
@@ -142,7 +141,7 @@ export default function Admin() {
     { id: "gcash", label: "GCash", icon: Smartphone, active: "from-indigo-500 to-blue-600", inactive: "bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100" },
     ...(deletedMembers.length > 0 ? [{ id: "deleted", label: `Deleted (${deletedMembers.length})`, icon: Trash2, active: "from-red-500 to-rose-600", inactive: "bg-red-50 text-red-700 border-red-200 hover:bg-red-100" }] : []),
     ...(canManageTabs ? [{ id: "roles", label: "Roles", icon: UserCog, active: "from-fuchsia-500 to-pink-600", inactive: "bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200 hover:bg-fuchsia-100" }] : []),
-    ...(tabVisibility.subadmin ? [{ id: "subadmins", label: "Store", icon: Shield, active: "from-emerald-500 to-green-600", inactive: "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100" }] : []),
+    ...(tabVisibility.subadmin ? [{ id: "subadmins", label: "Sub-Admins", icon: Shield, active: "from-emerald-500 to-green-600", inactive: "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100" }] : []),
     { id: "settings", label: "Settings", icon: Settings, active: "from-slate-500 to-gray-600", inactive: "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100" },
     { id: "profile", label: "My Profile", icon: User, active: "from-violet-500 to-indigo-600", inactive: "bg-violet-50 text-violet-700 border-violet-200 hover:bg-violet-100" },
   ];
@@ -417,39 +416,24 @@ export default function Admin() {
     catch { toast.error("Failed to update role"); }
   }
 
-  async function setStoreQuota() {
-    if (!quotaStoreId) { toast.error("Select a store first"); return; }
-    const amount = parseInt(quotaAmount) || 0;
-    if (amount < 1) { toast.error("Enter a valid quota amount"); return; }
-    setSettingQuota(true);
+  async function transferCodesToSubAdmin() {
+    if (!transferSubAdminId) { toast.error("Select a sub-admin first"); return; }
+    const count = parseInt(transferCodeCount) || 0;
+    if (count < 1) { toast.error("Enter a valid count"); return; }
+    setTransferring(true);
     try {
-      const storeMember = subAdminMembers.find(sa => sa.id === quotaStoreId);
-      const existing = storeQuotas.find(q => q.store_member_id === quotaStoreId);
-      const now = new Date().toISOString();
-      if (existing) {
-        // Add to existing quota — store can generate additional codes
-        const newQuota = (existing.quota_amount || 0) + amount;
-        await supabase.from("store_code_quotas").update({
-          quota_amount: newQuota,
-          updated_date: now,
-        }).eq("id", existing.id);
-        toast.success(`Quota increased by ${amount} for ${storeMember?.full_name || "store"}. Total: ${newQuota} codes.`);
-      } else {
-        await supabase.from("store_code_quotas").insert({
-          store_member_id: quotaStoreId,
-          quota_amount: amount,
-          generated_count: 0,
-          set_date: now,
-          updated_date: now,
-        });
-        toast.success(`Quota of ${amount} codes set for ${storeMember?.full_name || "store"}.`);
+      const availableCodes = codes.filter(c => !c.is_used && !c.assigned_sub_admin_id && !c.assigned_username);
+      if (availableCodes.length < count) { toast.error(`Only ${availableCodes.length} unassigned codes available`); setTransferring(false); return; }
+      const toTransfer = availableCodes.slice(0, count);
+      for (const c of toTransfer) {
+        await supabase.from("maintenance_codes").update({ assigned_sub_admin_id: transferSubAdminId }).eq("id", c.id);
       }
-      setQuotaStoreId("");
-      setQuotaAmount("");
-      refetchQuotas();
+      toast.success(`${count} code(s) transferred to ${subAdminMembers.find(sa => sa.id === transferSubAdminId)?.full_name || "sub-admin"}`);
+      setTransferSubAdminId("");
+      setTransferCodeCount("1");
       window.location.reload();
-    } catch { toast.error("Failed to set quota"); }
-    setSettingQuota(false);
+    } catch { toast.error("Failed to transfer codes"); }
+    setTransferring(false);
   }
 
   async function saveGcash() {
@@ -1215,7 +1199,7 @@ export default function Admin() {
               <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                 <Shield className="w-5 h-5 text-purple-500" /> Sub-Admin Role Management
               </h2>
-              <p className="text-sm text-gray-500 mt-1">Promote approved members to Store so they can generate and redeem codes for users within their quota.</p>
+              <p className="text-sm text-gray-500 mt-1">Promote approved members to sub-admin so they can redeem codes for users and manage their assigned users.</p>
             </div>
             <div className="p-5">
               {/* Search */}
@@ -1235,16 +1219,16 @@ export default function Admin() {
                     <div className="min-w-0">
                       <p className="font-bold text-gray-900 truncate">{m.username}</p>
                       <p className="text-sm text-gray-400 truncate">
-                        {m.role === "sub_admin" ? "Store" : "Member"}{m.email ? ` · ${m.email}` : ""}{m.full_name ? ` · ${m.full_name}` : ""}
+                        {m.role === "sub_admin" ? "Sub-Admin" : "Member"}{m.email ? ` · ${m.email}` : ""}{m.full_name ? ` · ${m.full_name}` : ""}
                       </p>
                     </div>
                     {m.role === "sub_admin" ? (
                       <Button onClick={() => setRole(m.id, "member")} size="sm" variant="outline" className="border-amber-200 text-amber-600 hover:bg-amber-50 h-9 px-4 text-xs whitespace-nowrap">
-                        <ArrowLeft className="w-3.5 h-3.5 mr-1.5" /> Remove Store
+                        <ArrowLeft className="w-3.5 h-3.5 mr-1.5" /> Remove
                       </Button>
                     ) : (
                       <Button onClick={() => setRole(m.id, "sub_admin")} size="sm" className="bg-gradient-to-r from-amber-500 to-orange-600 text-white h-9 px-4 text-xs whitespace-nowrap">
-                        <UserPlus className="w-3.5 h-3.5 mr-1.5" /> Make Store
+                        <UserPlus className="w-3.5 h-3.5 mr-1.5" /> Make Sub-Admin
                       </Button>
                     )}
                   </div>
@@ -1261,68 +1245,62 @@ export default function Admin() {
             </div>
           </div>
 
-          {/* Set Code Quota for Store */}
+          {/* Transfer Maintenance Codes to Sub-Admin */}
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden border-t-4 border-t-teal-500">
             <div className="p-5 border-b border-gray-100">
               <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                <Key className="w-5 h-5 text-teal-500" /> Set Code Quota for Store
+                <Key className="w-5 h-5 text-teal-500" /> Transfer Maintenance Codes to Sub-Admin
               </h2>
-              <p className="text-sm text-gray-500 mt-1">Set the number of codes a Store can generate. Adding more increases their total quota.</p>
+              <p className="text-sm text-gray-500 mt-1">Transfer unused codes to a sub-admin. Only that sub-admin can redeem them for users.</p>
             </div>
             <div className="p-5">
               {subAdminMembers.length === 0 ? (
                 <div className="text-center py-8">
                   <Key className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-400">No stores yet. Promote a member above first.</p>
+                  <p className="text-gray-400">No sub-admins yet. Promote a member above first.</p>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {/* Store selector */}
+                  {/* Sub-Admin selector */}
                   <div>
-                    <Label>Select Store</Label>
-                    <select value={quotaStoreId} onChange={e => setQuotaStoreId(e.target.value)}
+                    <Label>Select Sub-Admin</Label>
+                    <select value={transferSubAdminId} onChange={e => setTransferSubAdminId(e.target.value)}
                       className="w-full h-12 rounded-xl border border-gray-200 px-4 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 bg-white">
-                      <option value="">Select a store</option>
+                      <option value="">Select a sub-admin</option>
                       {subAdminMembers.map(sa => {
-                        const quota = storeQuotas.find(q => q.store_member_id === sa.id);
-                        const generated = codes.filter(c => c.assigned_sub_admin_id === sa.id).length;
+                        const assignedCodes = codes.filter(c => c.assigned_sub_admin_id === sa.id);
+                        const unusedCount = assignedCodes.filter(c => !c.is_used).length;
                         return (
-                          <option key={sa.id} value={sa.id}>{sa.full_name} (@{sa.username}) — Quota: {quota?.quota_amount || 0}, Generated: {generated}</option>
+                          <option key={sa.id} value={sa.id}>{sa.full_name} (@{sa.username}) — {unusedCount} unused codes</option>
                         );
                       })}
                     </select>
                   </div>
-                  {/* Quota amount */}
+                  {/* Code count */}
                   <div>
-                    <Label>Number of Codes to Add</Label>
-                    <Input type="number" value={quotaAmount} onChange={e => setQuotaAmount(e.target.value)} placeholder="e.g. 50" />
+                    <Label>Number of Codes to Transfer</Label>
+                    <Input type="number" value={transferCodeCount} onChange={e => setTransferCodeCount(e.target.value)} placeholder="e.g. 5" />
                   </div>
-                  {quotaStoreId && storeQuotas.find(q => q.store_member_id === quotaStoreId) && (
-                    <div className="text-xs text-gray-500 bg-teal-50 rounded-lg p-3">
-                      <p>Current quota: <strong>{storeQuotas.find(q => q.store_member_id === quotaStoreId).quota_amount}</strong> codes</p>
-                      <p>Set on: {formatDate(storeQuotas.find(q => q.store_member_id === quotaStoreId).set_date, "MMM d, yyyy h:mm a")}</p>
-                      <p>Last updated: {formatDate(storeQuotas.find(q => q.store_member_id === quotaStoreId).updated_date, "MMM d, yyyy h:mm a")}</p>
-                    </div>
-                  )}
-                  <Button onClick={setStoreQuota} disabled={settingQuota || !quotaStoreId}
+                  <p className="text-xs text-gray-400">
+                    {codes.filter(c => !c.is_used && !c.assigned_sub_admin_id && !c.assigned_username).length} unassigned codes available.
+                  </p>
+                  <Button onClick={transferCodesToSubAdmin} disabled={transferring || !transferSubAdminId}
                     className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white">
-                    <ArrowRight className="w-4 h-4 mr-2" /> {settingQuota ? "Setting..." : "Set / Add Quota"}
+                    <ArrowRight className="w-4 h-4 mr-2" /> {transferring ? "Transferring..." : "Transfer Codes"}
                   </Button>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Existing Store Overview */}
+          {/* Existing Sub-Admin Overview */}
           {subAdminMembers.length > 0 && (
             <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-gray-500 uppercase">Current Stores</h3>
+              <h3 className="text-sm font-semibold text-gray-500 uppercase">Current Sub-Admins</h3>
               {subAdminMembers.map(sa => {
-                const quota = storeQuotas.find(q => q.store_member_id === sa.id);
                 const assignedCodes = codes.filter(c => c.assigned_sub_admin_id === sa.id);
                 const unusedCodes = assignedCodes.filter(c => !c.is_used);
                 const managedMembers = approvedMembers.filter(m => m.referrer_id === sa.id);
-                const remaining = (quota?.quota_amount || 0) - (quota?.generated_count || 0);
                 return (
                   <div key={sa.id} className="bg-white rounded-2xl border border-gray-100 shadow overflow-hidden">
                     <div className="p-4 border-b border-gray-100 bg-amber-50 flex items-center justify-between">
@@ -1331,18 +1309,11 @@ export default function Admin() {
                         <p className="text-xs text-gray-500">@{sa.username}</p>
                       </div>
                       <div className="flex gap-4 text-sm">
-                        <span className="text-gray-600"><strong>{quota?.quota_amount || 0}</strong> quota</span>
-                        <span className="text-gray-600"><strong>{assignedCodes.length}</strong> generated</span>
-                        <span className="text-gray-600"><strong>{remaining}</strong> remaining</span>
+                        <span className="text-gray-600"><strong>{assignedCodes.length}</strong> codes</span>
+                        <span className="text-gray-600"><strong>{unusedCodes.length}</strong> unused</span>
                         <span className="text-gray-600"><strong>{managedMembers.length}</strong> members</span>
                       </div>
                     </div>
-                    {quota && (
-                      <div className="px-4 py-2 bg-gray-50 text-xs text-gray-500 flex gap-4">
-                        <span>Set: {formatDate(quota.set_date, "MMM d, yyyy h:mm a")}</span>
-                        <span>Updated: {formatDate(quota.updated_date, "MMM d, yyyy h:mm a")}</span>
-                      </div>
-                    )}
                     {managedMembers.length > 0 && (
                       <div className="p-4">
                         <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Managed Members</p>

@@ -19,7 +19,7 @@ const NAV_ITEMS = [
   { name: "My Profile", icon: User, path: "Profile" },
 ];
 const ADMIN_ITEMS = [{ name: "Admin Panel", icon: Shield, path: "Admin" }];
-const SUBADMIN_ITEMS = [{ name: "Store", icon: Shield, path: "SubAdmin" }];
+const SUBADMIN_ITEMS = [{ name: "Sub-Admin Panel", icon: Shield, path: "SubAdmin" }];
 const SUPADMIN_ITEMS = [{ name: "Super Admin", icon: Crown, path: "SupAdmin" }];
 
 function navPath(path) {
