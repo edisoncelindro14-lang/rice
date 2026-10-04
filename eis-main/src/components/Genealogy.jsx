@@ -108,8 +108,8 @@ export default function Genealogy() {
           onClick={() => selectMember(member)}
           className={`group cursor-pointer relative w-48 rounded-2xl px-3.5 py-3.5 transition-all duration-300 hover:scale-105 hover:shadow-2xl border-2 ${
             isActive
-              ? "bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 border-blue-300/50 text-white"
-              : "bg-gradient-to-br from-gray-800 via-black to-gray-900 border-gray-700/50 text-white"
+              ? "bg-gradient-to-br from-blue-400 to-blue-600 border-blue-300/50 text-white"
+              : "bg-gradient-to-br from-gray-700 to-black border-gray-700/50 text-white"
           } ${isRoot ? "ring-4 ring-amber-400 ring-offset-2 ring-offset-gray-50" : ""}`}
         >
           {/* Subtle inner glow overlay */}
