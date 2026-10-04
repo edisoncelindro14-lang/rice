@@ -127,7 +127,7 @@ export default function Store() {
         {q.remaining < 1 && <p className="text-sm text-red-500 mt-3">No remaining codes. Ask the admin to add more.</p>}
       </div>
 
-      {/* Phonebook — add usernames and send available codes */}
+      {/* Storebook — add usernames and send available codes */}
       <StorePhonebook storeId={currentMember.id} members={members} codes={codes} refetchCodes={refetchCodes} refetchTrigger={phonebookVersion} />
 
       {/* Redeem code for a member */}

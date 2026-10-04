@@ -67,11 +67,11 @@ export default function StorePhonebook({ storeId, members, codes, refetchCodes, 
       member_id: member.id,
     });
     if (error) {
-      if (error.code === "23505") toast.error("Already in your phonebook");
+      if (error.code === "23505") toast.error("Already in your storebook");
       else toast.error("Failed to add");
       return;
     }
-    toast.success(`@${member.username} added to phonebook`);
+    toast.success(`@${member.username} added to storebook`);
     setMemberSearch("");
     refetchPhonebook();
   }
@@ -105,7 +105,7 @@ export default function StorePhonebook({ storeId, members, codes, refetchCodes, 
     <div className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden mb-6">
       <div className="p-6 border-b border-gray-100">
         <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-          <BookUser className="w-5 h-5 text-teal-500" /> Phonebook
+          <BookUser className="w-5 h-5 text-teal-500" /> Storebook
         </h2>
         <p className="text-sm text-gray-500 mt-1">Add usernames and send available codes directly to them.</p>
       </div>
@@ -113,7 +113,7 @@ export default function StorePhonebook({ storeId, members, codes, refetchCodes, 
       <div className="p-6 space-y-5">
         {/* Add to phonebook */}
         <div>
-          <Label>Add a username to your phonebook</Label>
+          <Label>Add a username to your storebook</Label>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <Input
@@ -149,20 +149,20 @@ export default function StorePhonebook({ storeId, members, codes, refetchCodes, 
 
         {/* Phonebook list */}
         <div>
-          <Label>My Phonebook ({phonebook.length})</Label>
+          <Label>My Storebook ({phonebook.length})</Label>
           <div className="relative mb-3">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <Input
               value={phonebookSearch}
               onChange={e => setPhonebookSearch(e.target.value)}
-              placeholder="Search your phonebook…"
+              placeholder="Search your storebook…"
               className="pl-10"
             />
           </div>
 
           {filteredPhonebook.length === 0 ? (
             <p className="text-center py-8 text-gray-400 text-sm">
-              {phonebook.length === 0 ? "Your phonebook is empty. Search above to add usernames." : "No matching entries."}
+              {phonebook.length === 0 ? "Your storebook is empty. Search above to add usernames." : "No matching entries."}
             </p>
           ) : (
             <div className="space-y-2">
