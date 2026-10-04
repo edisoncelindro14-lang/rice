@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import { useTable, useCurrentMember } from "../lib/useData";
 import { formatDate } from "../lib/helpers";
 import { storeQuotaSummary, generateStoreCodes } from "../lib/storeQuota";
+import StorePhonebook from "./StorePhonebook";
 import { Button, Input, Label, Badge } from "./ui";
 
 export default function Store() {
@@ -80,6 +81,9 @@ export default function Store() {
         </div>
         {q.remaining < 1 && <p className="text-sm text-red-500 mt-3">No remaining codes. Ask the admin to add more.</p>}
       </div>
+
+      {/* Phonebook — add usernames and send available codes */}
+      <StorePhonebook storeId={currentMember.id} members={members} codes={codes} refetchCodes={refetchCodes} />
 
       {/* Allotments from admin */}
       <div className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden mb-6">

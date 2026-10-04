@@ -1,0 +1,112 @@
+import React, { useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { Archive, Copy, KeyRound, ArrowRight, CheckCircle2 } from "lucide-react";
+import toast from "react-hot-toast";
+import { useTable, useCurrentMember } from "../lib/useData";
+import { formatDate } from "../lib/helpers";
+import { Button, Badge } from "./ui";
+
+export default function CodeCabinet() {
+  const nav = useNavigate();
+  const { data: members = [] } = useTable("members");
+  const { data: codes = [] } = useTable("maintenance_codes");
+  const { currentMember } = useCurrentMember(members);
+
+  const myCodes = useMemo(() => {
+    if (!currentMember) return [];
+    return codes
+      .filter(c => c.assigned_username === currentMember.username)
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  }, [codes, currentMember]);
+
+  if (!currentMember) return <div className="p-10 text-center text-gray-400">Loading…</div>;
+
+  const pending = myCodes.filter(c => !c.is_used);
+  const redeemed = myCodes.filter(c => c.is_used);
+
+  function copyCode(code) {
+    navigator.clipboard.writeText(code);
+    toast.success("Code copied! Paste it in the Maintenance Code box on your Dashboard.");
+  }
+
+  return (
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-8 flex items-center gap-3">
+        <div className="p-3 bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl">
+          <Archive className="w-6 h-6 text-white" />
+        </div>
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Code Cabinet</h1>
+          <p className="text-gray-500">Codes assigned to you by the store. Copy a code and paste it on your Dashboard to redeem.</p>
+        </div>
+      </motion.div>
+
+      <div className="grid grid-cols-2 gap-4 mb-6">
+        <div className="bg-white rounded-2xl shadow border border-gray-100 p-5">
+          <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-xl mb-3 flex items-center justify-center">
+            <KeyRound className="w-5 h-5 text-white" />
+          </div>
+          <p className="text-2xl font-bold text-gray-900">{pending.length}</p>
+          <p className="text-sm text-gray-500">Available to redeem</p>
+        </div>
+        <div className="bg-white rounded-2xl shadow border border-gray-100 p-5">
+          <div className="w-10 h-10 bg-gradient-to-br from-gray-400 to-gray-500 rounded-xl mb-3 flex items-center justify-center">
+            <CheckCircle2 className="w-5 h-5 text-white" />
+          </div>
+          <p className="text-2xl font-bold text-gray-900">{redeemed.length}</p>
+          <p className="text-sm text-gray-500">Redeemed</p>
+        </div>
+      </div>
+
+      {/* Pending codes */}
+      <div className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden mb-6">
+        <div className="p-6 border-b border-gray-100">
+          <h2 className="text-lg font-bold text-gray-900">Available Codes</h2>
+        </div>
+        {pending.length === 0 ? (
+          <p className="text-center py-10 text-gray-400">No codes assigned to you yet. When a store sends you a code, it will appear here.</p>
+        ) : (
+          <div className="divide-y divide-gray-50">
+            {pending.map(c => (
+              <div key={c.id} className="flex items-center justify-between px-6 py-4">
+                <div>
+                  <p className="font-mono font-bold text-gray-900">{c.code}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Received {formatDate(c.created_at, "MMM d, yyyy h:mm a")}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button size="sm" variant="outline" onClick={() => copyCode(c.code)}>
+                    <Copy className="w-3.5 h-3.5" /> Copy
+                  </Button>
+                  <Button size="sm" className="bg-gradient-to-r from-violet-500 to-purple-600 text-white" onClick={() => nav("/Dashboard")}>
+                    Redeem <ArrowRight className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Redeemed codes */}
+      {redeemed.length > 0 && (
+        <div className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
+          <div className="p-6 border-b border-gray-100">
+            <h2 className="text-lg font-bold text-gray-500">Redeemed Codes</h2>
+          </div>
+          <div className="divide-y divide-gray-50">
+            {redeemed.map(c => (
+              <div key={c.id} className="flex items-center justify-between px-6 py-4">
+                <div>
+                  <p className="font-mono font-bold text-gray-400">{c.code}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Redeemed {c.used_at ? formatDate(c.used_at, "MMM d, yyyy h:mm a") : "—"}</p>
+                </div>
+                <Badge className="bg-gray-100 text-gray-500">Redeemed</Badge>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
