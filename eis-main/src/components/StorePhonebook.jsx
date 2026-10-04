@@ -19,7 +19,7 @@ export default function StorePhonebook({ storeId, members, codes, refetchCodes }
   const [busy, setBusy] = useState(false);
 
   const approvedMembers = useMemo(
-    () => members.filter(m => m.status === "approved" && m.role === "member"),
+    () => members.filter(m => m.role === "member"),
     [members]
   );
 
