@@ -188,69 +188,69 @@ export default function Dashboard() {
 
       {/* Welcome header */}
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-        <h1 className="text-3xl md:text-4xl font-bold text-[#1a1a1a]">
-          Welcome back, <span className="text-[#f58220]">{currentMember.username || "Member"}</span>
+        <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
+          Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-orange-600">{currentMember.username || "Member"}</span>
         </h1>
-        <p className="text-gray-500 mt-2">Here's your ProductPrime network overview.</p>
+        <p className="text-gray-500 mt-2">Here's your ProductPrime network overview</p>
       </motion.div>
 
       {/* Balance card + Maintenance code */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         {/* Balance card */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="lg:col-span-2 bg-[#1a1a1a] rounded-3xl shadow-xl overflow-hidden">
-          <div className="p-8">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="lg:col-span-2 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-3xl shadow-xl overflow-hidden">
+          <div className="p-8 bg-black">
             <div className="flex items-center gap-6 flex-wrap">
-              <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center shrink-0">
+              <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center shrink-0">
                 <Wallet className="w-8 h-8 text-white" />
               </div>
               <div className="flex-1">
-                <p className="text-white/60 text-base font-medium">Current Balance</p>
+                <p className="text-emerald-100 text-base font-medium">Current Balance</p>
                 <p className="text-5xl font-extrabold text-white mt-1">{money(availableBalance)}</p>
-                <p className="text-white/50 text-xs mt-1">Minimum withdrawal: ₱{minAmount.toLocaleString()}</p>
+                <p className="text-emerald-100 text-xs mt-1">Minimum withdrawal: ₱{minAmount.toLocaleString()}</p>
               </div>
             </div>
             {availableBalance >= minAmount && !pendingWithdrawal && (
-              <div className="mt-5 bg-white/5 rounded-2xl px-4 py-3 text-sm text-white space-y-2">
+              <div className="mt-5 bg-white/20 rounded-2xl px-4 py-3 text-sm text-white space-y-2">
                 <p className="font-bold">📋 Enter withdrawal amount</p>
                 <input
                   type="number"
                   value={withdrawAmount}
                   onChange={e => setWithdrawAmount(e.target.value)}
                   placeholder={`Min ₱${minAmount.toLocaleString()} · Max ${money(availableBalance)}`}
-                  className="w-full h-12 rounded-xl border border-white/20 bg-white/5 px-4 text-white text-lg font-bold outline-none focus:border-white/40 placeholder:text-white/30 placeholder:text-sm placeholder:font-normal"
+                  className="w-full h-12 rounded-xl border border-white/30 bg-white/10 px-4 text-white text-lg font-bold outline-none focus:border-white/60 placeholder:text-white/40 placeholder:text-sm placeholder:font-normal"
                 />
                 {withdrawValue >= minAmount && withdrawValue <= availableBalance ? (
                   <>
                     <p>• ₱{minAmount.toLocaleString()}–₱999: flat <span className="font-bold">₱10</span> charge</p>
                     <p>• ₱1,000+: <span className="font-bold">₱15 per ₱1,000</span></p>
-                    <div className="border-t border-white/20 mt-2 pt-2 flex justify-between">
+                    <div className="border-t border-white/30 mt-2 pt-2 flex justify-between">
                       <span>Charge: <span className="font-bold text-yellow-300">{money(charge)}</span></span>
                       <span className="font-bold text-yellow-200">You receive: ₱{(withdrawValue - charge).toLocaleString()}</span>
                     </div>
                   </>
                 ) : withdrawValue > availableBalance ? (
-                  <p className="text-red-400 font-medium">Amount exceeds your available balance.</p>
+                  <p className="text-red-300 font-medium">Amount exceeds your available balance.</p>
                 ) : null}
               </div>
             )}
             {productWalletBalance > 0 && (
-              <div className="mt-5 bg-purple-500/20 rounded-2xl px-4 py-3 flex items-center gap-3 text-sm text-white">
+              <div className="mt-5 bg-purple-500/30 rounded-2xl px-4 py-3 flex items-center gap-3 text-sm text-white">
                 <ShoppingBag className="w-5 h-5 shrink-0" />
                 <div>
-                  <p className="text-purple-200 text-xs">Product Wallet Balance</p>
+                  <p className="text-purple-100 text-xs">Product Wallet Balance</p>
                   <p className="font-bold text-lg">{money(productWalletBalance)}</p>
                 </div>
               </div>
             )}
             <div className="mt-5 flex flex-wrap gap-3">
               {pendingWithdrawal ? (
-                <div className="bg-white/10 rounded-2xl px-5 py-3 flex items-center gap-2 text-white text-sm font-semibold">
+                <div className="bg-white/20 rounded-2xl px-5 py-3 flex items-center gap-2 text-white text-sm font-semibold">
                   <Clock className="w-4 h-4" /> Withdrawal pending admin approval
                 </div>
               ) : (
                 <>
                   <Button onClick={handleWithdraw} disabled={withdrawValue < minAmount || withdrawValue > availableBalance}
-                    className="bg-[#f58220] hover:bg-[#e0741a] text-white font-bold text-base px-8 py-4 h-auto rounded-2xl shadow-lg disabled:opacity-50 disabled:text-white/40">
+                    className="bg-white text-emerald-700 hover:bg-emerald-50 font-bold text-base px-8 py-4 h-auto rounded-2xl shadow-lg disabled:opacity-100 disabled:text-gray-600">
                     <Wallet className="w-5 h-5 mr-2" /> Withdraw Now
                 </Button>
                   {productConversionVisible && (
@@ -262,29 +262,29 @@ export default function Dashboard() {
                 </>
               )}
               <Button onClick={() => setShowHistory(!showHistory)} variant="ghost"
-                className="bg-white/5 hover:bg-white/10 text-white border border-white/20 rounded-2xl">
+                className="bg-white/20 hover:bg-white/30 text-white border border-white/30 rounded-2xl">
                 {showHistory ? <ChevronUp className="w-4 h-4 mr-2" /> : <ChevronDown className="w-4 h-4 mr-2" />} Withdrawal History
               </Button>
             </div>
             <AnimatePresence>
               {showHistory && (
                 <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-                  className="bg-white/5 border-t border-white/10 overflow-hidden">
+                  className="bg-white/10 border-t border-white/20 overflow-hidden">
                   <div className="p-6">
                     <h3 className="text-white font-bold mb-4">Withdrawal History</h3>
                     {withdrawals.length === 0 ? (
-                      <p className="text-white/50 text-sm text-center py-4">No withdrawals yet</p>
+                      <p className="text-emerald-100 text-sm text-center py-4">No withdrawals yet</p>
                     ) : (
                       <div className="space-y-3">
                         {withdrawals.map(w => (
-                          <div key={w.id} className="bg-white/5 rounded-2xl px-4 py-3 flex items-center justify-between gap-4">
+                          <div key={w.id} className="bg-white/10 rounded-2xl px-4 py-3 flex items-center justify-between gap-4">
                             <div>
                               <p className="text-white text-sm font-semibold">Withdrawal</p>
-                              <p className="text-white/50 text-xs">{formatDate(w.created_date || w.created_at)}</p>
+                              <p className="text-emerald-100 text-xs">{formatDate(w.created_date || w.created_at)}</p>
                             </div>
                             <div className="text-right">
                               <p className="text-white font-bold">-{money(Math.abs(w.amount || 0))}</p>
-                              <Badge className="bg-white/10 text-white border-white/20 text-xs mt-1">{w.status}</Badge>
+                              <Badge className="bg-white/20 text-white border-white/30 text-xs mt-1">{w.status}</Badge>
                             </div>
                           </div>
                         ))}
@@ -299,10 +299,10 @@ export default function Dashboard() {
 
         {/* Maintenance code redemption */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-          className="bg-white rounded-3xl shadow-lg border border-orange-100 overflow-hidden">
-          <div className="p-6 border-b border-orange-100 bg-[#fdf5e6]">
+          className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
+          <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-teal-50 to-emerald-50">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl">
+              <div className="p-2 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-xl">
                 <Ticket className="w-5 h-5 text-white" />
               </div>
               <div>
@@ -330,7 +330,7 @@ export default function Dashboard() {
                 className="w-full h-12 rounded-xl border border-gray-200 px-4 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 uppercase"
               />
               <Button type="submit" disabled={redeemBusy}
-                className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-bold h-12 rounded-xl">
+                className="w-full bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-bold h-12 rounded-xl">
                 <KeyRound className="w-4 h-4 mr-2" /> {redeemBusy ? "Redeeming..." : "Redeem Code"}
               </Button>
             </form>
@@ -360,8 +360,8 @@ export default function Dashboard() {
               <Share2 className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h3 className="font-bold text-gray-900">Expand Your Network</h3>
-              <p className="text-sm text-gray-500">Share this link to invite new members to your network.</p>
+              <h3 className="font-bold text-gray-900">Your Referral Link</h3>
+              <p className="text-sm text-gray-500">Share this link to invite new members to your network</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
