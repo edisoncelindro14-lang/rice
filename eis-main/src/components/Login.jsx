@@ -1,11 +1,10 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { User, Lock, ArrowRight, Eye, EyeOff } from "lucide-react";
+import { User, Lock, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import toast from "react-hot-toast";
 import { supabase } from "../lib/supabase";
 import { saveMemberSession } from "../lib/auth";
-import { Button, Input, Label } from "./ui";
 
 const LOGO_URL = "https://media.base44.com/images/public/6ac1daab80dea63a77ad8fa1/66582b089_Firefly.png";
 
@@ -45,51 +44,122 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-amber-50 flex items-center justify-center p-6">
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
-        <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
-          <div className="bg-gradient-to-r from-amber-500 to-orange-600 p-8 text-center">
-            <img src={LOGO_URL} alt="ProductPrime" className="w-20 h-20 rounded-2xl mx-auto mb-4 object-cover shadow-lg" />
-            <h1 className="text-2xl font-bold text-white">ProductPrime Member Log In</h1>
+    <div className="min-h-screen relative flex items-center justify-center p-6 overflow-hidden"
+      style={{
+        background: "radial-gradient(ellipse at top, #0a2e4a 0%, #051828 40%, #020e1a 100%)",
+      }}
+    >
+      {/* Tech node background pattern */}
+      <div className="absolute inset-0 opacity-30"
+        style={{
+          backgroundImage: `
+            linear-gradient(rgba(0, 200, 255, 0.08) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0, 200, 255, 0.08) 1px, transparent 1px)
+          `,
+          backgroundSize: "40px 40px",
+        }}
+      />
+      {/* Glowing orbs */}
+      <div className="absolute top-1/4 left-1/4 w-72 h-72 rounded-full blur-3xl"
+        style={{ background: "rgba(0, 150, 200, 0.15)" }}
+      />
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full blur-3xl"
+        style={{ background: "rgba(0, 100, 180, 0.12)" }}
+      />
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative w-full max-w-md"
+      >
+        {/* Frosted glass card */}
+        <div
+          className="rounded-3xl border border-white/20 shadow-2xl overflow-hidden"
+          style={{
+            background: "rgba(255, 255, 255, 0.08)",
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
+          }}
+        >
+          {/* Header */}
+          <div className="p-8 text-center"
+            style={{ background: "linear-gradient(135deg, #f88b1f, #e86d1a)" }}
+          >
+            <img
+              src={LOGO_URL}
+              alt="ProductPrime"
+              className="w-20 h-20 rounded-full mx-auto mb-4 object-cover shadow-lg border-2 border-white/30"
+            />
+            <h1 className="text-2xl font-bold text-white tracking-wide">ProductPrime Member Log In</h1>
           </div>
+
+          {/* Form */}
           <form onSubmit={submit} className="p-8 space-y-5">
-            <h2 className="text-xl font-bold text-gray-900 text-center">Member Login</h2>
+            <h2 className="text-xl font-bold text-white text-center">Member Login</h2>
+
             <div className="space-y-2">
-              <Label>Username</Label>
+              <label className="block text-sm font-medium text-white">Username</label>
               <div className="relative">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <Input
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/50" />
+                <input
                   value={form.username}
                   onChange={e => setForm({ ...form, username: e.target.value })}
                   placeholder="Enter your username"
-                  className="pl-12"
+                  className="w-full h-12 pl-12 pr-4 rounded-xl text-white placeholder-white/40 border border-white/20 focus:border-orange-400 focus:outline-none transition-colors"
+                  style={{ background: "rgba(255, 255, 255, 0.06)" }}
                   required
                 />
               </div>
             </div>
+
             <div className="space-y-2">
-              <Label>Password</Label>
+              <label className="block text-sm font-medium text-white">Password</label>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <Input
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/50" />
+                <input
                   type={showPwd ? "text" : "password"}
                   value={form.password}
                   onChange={e => setForm({ ...form, password: e.target.value })}
                   placeholder="Enter your password"
-                  className="pl-12 pr-12"
+                  className="w-full h-12 pl-12 pr-12 rounded-xl text-white placeholder-white/40 border border-white/20 focus:border-orange-400 focus:outline-none transition-colors"
+                  style={{ background: "rgba(255, 255, 255, 0.06)" }}
                   required
                 />
-                <button type="button" onClick={() => setShowPwd(!showPwd)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                <button
+                  type="button"
+                  onClick={() => setShowPwd(!showPwd)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white/80"
+                >
                   {showPwd ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
             </div>
-            <Button type="submit" disabled={busy} className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white h-12 rounded-xl font-bold">
-              {busy ? "Signing in..." : "Login"} <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
-            <p className="text-center text-gray-600">Don't have an account? <Link to="/Register" className="text-amber-600 font-semibold hover:underline">Register here</Link></p>
+
+            <button
+              type="submit"
+              disabled={busy}
+              className="w-full h-12 rounded-full text-white font-bold flex items-center justify-center gap-2 transition-all hover:opacity-90 disabled:opacity-50"
+              style={{ background: "linear-gradient(135deg, #f88b1f, #e86d1a)" }}
+            >
+              {busy ? "Signing in..." : "Login"}
+            </button>
+
+            <p className="text-center text-white/70 text-sm">
+              Don't have an account?{" "}
+              <Link to="/Register" className="text-orange-400 font-semibold hover:underline">
+                Register here
+              </Link>
+            </p>
           </form>
         </div>
+
+        {/* Back to Login link (top-left of card) */}
+        <Link
+          to="/MemberLogin"
+          className="absolute top-4 left-4 inline-flex items-center gap-2 text-white/70 hover:text-white text-sm font-medium z-10"
+        >
+          <ArrowLeft className="w-4 h-4" /> Back to Login
+        </Link>
       </motion.div>
     </div>
   );
