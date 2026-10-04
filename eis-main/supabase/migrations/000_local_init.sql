@@ -119,6 +119,21 @@ create table if not exists public.gcash_receipts (
   created_at timestamptz default now()
 );
 
+-- ========== STORE CODE QUOTAS ==========
+-- Admin sets a code generation quota for each Store (sub_admin) member.
+-- When the quota is increased, the Store can generate additional codes up to the new limit.
+create table if not exists public.store_code_quotas (
+  id uuid primary key default gen_random_uuid(),
+  store_member_id uuid not null references public.members(id) on delete cascade,
+  quota_amount integer not null default 0,
+  generated_count integer not null default 0,
+  set_date timestamptz not null default now(),
+  updated_date timestamptz not null default now(),
+  notes text
+);
+
+create index if not exists idx_store_code_quotas_store_member on public.store_code_quotas(store_member_id);
+
 -- ========== MAKE FK CONSTRAINTS DEFERRABLE ==========
 -- Allows bulk seed/sync scripts to insert rows in any order without FK violations.
 -- Each constraint is altered only if it exists (safe on re-runs and partial schemas).
