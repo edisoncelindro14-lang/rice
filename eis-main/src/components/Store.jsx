@@ -8,6 +8,7 @@ import { formatDate, maintenanceStatus } from "../lib/helpers";
 import { storeQuotaSummary, generateStoreCodes } from "../lib/storeQuota";
 import { redeemCodeForMember } from "../lib/redeem";
 import StorePhonebook from "./StorePhonebook";
+import StoreAvailableCodes from "./StoreAvailableCodes";
 import { Button, Input, Label, Badge } from "./ui";
 
 export default function Store() {
@@ -129,6 +130,16 @@ export default function Store() {
 
       {/* Storebook — add usernames and send available codes */}
       <StorePhonebook storeId={currentMember.id} members={members} codes={codes} refetchCodes={refetchCodes} refetchTrigger={phonebookVersion} />
+
+      {/* Available codes designated to members — searchable list */}
+      <StoreAvailableCodes
+        storeId={currentMember.id}
+        members={members}
+        codes={codes}
+        refetchCodes={refetchCodes}
+        refetchHistory={refetchHistory}
+        onRedeemDone={() => setPhonebookVersion(v => v + 1)}
+      />
 
       {/* Redeem code for a member */}
       <div className="bg-white rounded-3xl shadow-lg border border-gray-100 p-6 mb-6">
