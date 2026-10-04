@@ -1,17 +1,34 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Archive, Copy, KeyRound, ArrowRight, CheckCircle2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useTable, useCurrentMember } from "../lib/useData";
+import { supabase } from "../lib/supabase";
 import { formatDate } from "../lib/helpers";
 import { Button, Badge } from "./ui";
 
 export default function CodeCabinet() {
   const nav = useNavigate();
   const { data: members = [] } = useTable("members");
-  const { data: codes = [] } = useTable("maintenance_codes");
+  const { data: codes = [], refetch: refetchCodes } = useTable("maintenance_codes");
   const { currentMember } = useCurrentMember(members);
+
+  // Real-time: when a code is assigned to this user, it appears automatically
+  useEffect(() => {
+    const channel = supabase
+      .channel("code_cabinet_changes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "maintenance_codes" }, (payload) => {
+        const row = payload.new;
+        if (row && currentMember && row.assigned_username === currentMember.username) {
+          toast.success("New code received in your Code Cabinet!");
+        }
+        refetchCodes();
+      })
+      .subscribe();
+    const interval = setInterval(() => refetchCodes(), 5000);
+    return () => { supabase.removeChannel(channel); clearInterval(interval); };
+  }, [refetchCodes, currentMember]);
 
   const myCodes = useMemo(() => {
     if (!currentMember) return [];
