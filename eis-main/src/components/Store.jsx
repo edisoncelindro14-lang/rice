@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Store as StoreIcon, Ticket, Calendar, Copy, History, Key, X, Search } from "lucide-react";
+import { Store as StoreIcon, Ticket, Calendar, Copy, Key, X, Search } from "lucide-react";
 import toast from "react-hot-toast";
 import { useTable, useCurrentMember } from "../lib/useData";
 import { supabase } from "../lib/supabase";
@@ -169,28 +169,6 @@ export default function Store() {
             <datalist id="store-redeem-usernames">{usernames.map(u => <option key={u} value={u} />)}</datalist>
           </div>
           <Button onClick={openRedeemModal} className="bg-teal-500 hover:bg-teal-600 text-white h-10"><Key className="w-4 h-4" /> Redeem</Button>
-        </div>
-      </div>
-
-      {/* Redemption transaction history */}
-      <div className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden mb-6">
-        <div className="p-6 border-b border-gray-100"><h2 className="text-lg font-bold text-gray-900 flex items-center gap-2"><History className="w-5 h-5 text-violet-500" /> Redemption History</h2></div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead><tr className="border-b border-gray-100">{["Code", "Redeemed By", "Date", "Status"].map(h => <th key={h} className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">{h}</th>)}</tr></thead>
-            <tbody>
-              {redemptionHistory.filter(h => h.store_member_id === currentMember.id).length === 0 ? (
-                <tr><td colSpan="4" className="text-center py-10 text-gray-400">No redemptions yet</td></tr>
-              ) : redemptionHistory.filter(h => h.store_member_id === currentMember.id).sort((a, b) => new Date(b.redeemed_at) - new Date(a.redeemed_at)).map(h => (
-                <tr key={h.id} className="border-b border-gray-50 hover:bg-gray-50">
-                  <td className="px-6 py-3 text-sm font-mono font-bold text-gray-900">{h.code}</td>
-                  <td className="px-6 py-3 text-sm text-gray-600">{h.redeemed_by_username ? `@${h.redeemed_by_username}` : "—"}</td>
-                  <td className="px-6 py-3 text-sm text-gray-500">{formatDate(h.redeemed_at)}</td>
-                  <td className="px-6 py-3"><Badge className="bg-green-100 text-green-700">{h.status}</Badge></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
         </div>
       </div>
 
