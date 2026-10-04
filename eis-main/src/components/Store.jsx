@@ -117,18 +117,20 @@ export default function Store() {
       {/* Allotments from admin */}
       <div className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden mb-6">
         <div className="p-6 border-b border-gray-100"><h2 className="text-lg font-bold text-gray-900 flex items-center gap-2"><Calendar className="w-5 h-5 text-indigo-500" /> Codes Added by Admin</h2></div>
-        <table className="w-full">
-          <thead><tr className="border-b border-gray-100">{["Date", "Codes Added"].map(h => <th key={h} className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">{h}</th>)}</tr></thead>
-          <tbody>
-            {q.allotments.length === 0 ? <tr><td colSpan="2" className="text-center py-10 text-gray-400">No codes allotted yet</td></tr> :
-            q.allotments.map(a => (
-              <tr key={a.id} className="border-b border-gray-50">
-                <td className="px-6 py-3 text-sm text-gray-600">{formatDate(a.created_date)}</td>
-                <td className="px-6 py-3 text-sm font-semibold text-emerald-700">+{a.quota_amount}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="overflow-auto max-h-[440px]">
+          <table className="w-full">
+            <thead className="sticky top-0 bg-white z-10"><tr className="border-b border-gray-100">{["Date", "Codes Added"].map(h => <th key={h} className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">{h}</th>)}</tr></thead>
+            <tbody>
+              {q.allotments.length === 0 ? <tr><td colSpan="2" className="text-center py-10 text-gray-400">No codes allotted yet</td></tr> :
+              q.allotments.map(a => (
+                <tr key={a.id} className="border-b border-gray-50">
+                  <td className="px-6 py-3 text-sm text-gray-600">{formatDate(a.created_date)}</td>
+                  <td className="px-6 py-3 text-sm font-semibold text-emerald-700">+{a.quota_amount}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Generate */}
