@@ -1183,6 +1183,8 @@ export default function Admin() {
                         {m.role === "admin" && <Button onClick={() => setRole(m.id, "member")} size="sm" variant="outline" className="border-purple-200 text-purple-600 hover:bg-purple-50 h-8 px-3 text-xs">Remove Admin</Button>}
                         {m.role !== "sub_admin" && m.role !== "admin" && <Button onClick={() => setRole(m.id, "sub_admin")} size="sm" className="bg-amber-500 text-white h-8 px-3 text-xs"><Shield className="w-3 h-3 mr-1" /> Make Sub-Admin</Button>}
                         {m.role === "sub_admin" && <Button onClick={() => setRole(m.id, "member")} size="sm" variant="outline" className="border-amber-200 text-amber-600 hover:bg-amber-50 h-8 px-3 text-xs">Remove Sub-Admin</Button>}
+                        {m.role !== "store" && m.role !== "admin" && m.role !== "sub_admin" && <Button onClick={() => setRole(m.id, "store")} size="sm" className="bg-emerald-600 text-white h-8 px-3 text-xs"><Store className="w-3 h-3 mr-1" /> Make Store</Button>}
+                        {m.role === "store" && <Button onClick={() => setRole(m.id, "member")} size="sm" variant="outline" className="border-emerald-200 text-emerald-600 hover:bg-emerald-50 h-8 px-3 text-xs">Remove Store</Button>}
                       </div>
                     </td>
                   </tr>
