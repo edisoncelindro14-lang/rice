@@ -8,14 +8,14 @@ import { supabase } from "../lib/supabase";
 import { MaintenanceBanner } from "./MaintenanceBanner";
 import { GCashButton } from "./GCashButton";
 
-const LOGO_URL = "https://media.base44.com/images/public/69f351e73d5a6169e8e9b7a5/82fc320ca_ChatGPTImageApr28202608_17_52PM.png";
+const LOGO_URL = "https://media.base44.com/images/public/6ac1daab80dea63a77ad8fa1/66582b089_Firefly.png";
 
 const NAV_ITEMS = [
   { name: "Dashboard", icon: LayoutDashboard, path: "Dashboard" },
-  { name: "Mamlakah Tree", icon: GitBranch, path: "Genealogy" },
+  { name: "ProductPrime Tree", icon: GitBranch, path: "Genealogy" },
   { name: "1st Level Monitoring", icon: Users, path: "Monitoring" },
   { name: "Total Withdrawal", icon: Wallet, path: "Earnings" },
-  { name: "Mamlakah ComPlan", icon: Layers, path: "LevelBonuses" },
+  { name: "ProductPrime ComPlan", icon: Layers, path: "LevelBonuses" },
   { name: "Code Cabinet", icon: Archive, path: "CodeCabinet" },
   { name: "My Profile", icon: User, path: "Profile" },
 ];
@@ -82,8 +82,8 @@ export default function Layout({ children, currentPageName }) {
       {/* Mobile header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-xl border-b border-gray-100 z-50 px-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <img src={LOGO_URL} alt="Mamlakah" className="w-10 h-10 rounded-xl object-cover" />
-          <span className="font-bold text-xl text-gray-900">Mamlakah</span>
+          <img src={LOGO_URL} alt="ProductPrime" className="w-10 h-10 rounded-xl object-cover" />
+          <span className="font-bold text-xl text-gray-900">ProductPrime</span>
         </div>
         <button onClick={() => setMobileOpen(true)} className="p-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 shadow-lg active:scale-95 transition-all">
           <Menu className="w-8 h-8 text-white" />
@@ -94,10 +94,10 @@ export default function Layout({ children, currentPageName }) {
       <aside className="hidden lg:flex fixed left-0 top-0 bottom-0 w-64 bg-white border-r border-gray-100 flex-col z-40">
         <div className="p-6 border-b border-gray-100">
           <div className="flex items-center gap-3">
-            <img src={LOGO_URL} alt="Mamlakah" className="w-10 h-10 rounded-xl object-cover" />
+            <img src={LOGO_URL} alt="ProductPrime" className="w-10 h-10 rounded-xl object-cover" />
             <div>
-              <p className="font-bold text-xl text-gray-900">Mamlakah</p>
-              <p className="text-xs text-gray-500">Mamlakah Network System</p>
+              <p className="font-bold text-xl text-gray-900">ProductPrime</p>
+              <p className="text-xs text-gray-500">ProductPrime Network System</p>
             </div>
           </div>
         </div>
@@ -139,8 +139,8 @@ export default function Layout({ children, currentPageName }) {
             >
               <div className="p-6 border-b border-gray-100 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <img src={LOGO_URL} alt="Mamlakah" className="w-10 h-10 rounded-xl object-cover" />
-                  <span className="font-bold text-xl text-gray-900">Mamlakah</span>
+                  <img src={LOGO_URL} alt="ProductPrime" className="w-10 h-10 rounded-xl object-cover" />
+                  <span className="font-bold text-xl text-gray-900">ProductPrime</span>
                 </div>
                 <button onClick={() => setMobileOpen(false)} className="p-2 rounded-lg hover:bg-gray-100">
                   <X className="w-5 h-5" />

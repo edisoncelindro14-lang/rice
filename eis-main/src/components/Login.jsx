@@ -7,7 +7,7 @@ import { supabase } from "../lib/supabase";
 import { saveMemberSession } from "../lib/auth";
 import { Button, Input, Label } from "./ui";
 
-const LOGO_URL = "https://media.base44.com/images/public/69f351e73d5a6169e8e9b7a5/82fc320ca_ChatGPTImageApr28202608_17_52PM.png";
+const LOGO_URL = "https://media.base44.com/images/public/6ac1daab80dea63a77ad8fa1/66582b089_Firefly.png";
 
 export default function Login() {
   const nav = useNavigate();
@@ -49,8 +49,8 @@ export default function Login() {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
         <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
           <div className="bg-gradient-to-r from-amber-500 to-orange-600 p-8 text-center">
-            <img src={LOGO_URL} alt="Mamlakah" className="w-20 h-20 rounded-2xl mx-auto mb-4 object-cover shadow-lg" />
-            <h1 className="text-2xl font-bold text-white">Mamlakah Member Log In</h1>
+            <img src={LOGO_URL} alt="ProductPrime" className="w-20 h-20 rounded-2xl mx-auto mb-4 object-cover shadow-lg" />
+            <h1 className="text-2xl font-bold text-white">ProductPrime Member Log In</h1>
           </div>
           <form onSubmit={submit} className="p-8 space-y-5">
             <h2 className="text-xl font-bold text-gray-900 text-center">Member Login</h2>

@@ -8,7 +8,7 @@ import { saveMemberSession } from "../lib/auth";
 import { generateReferralCode } from "../lib/helpers";
 import { Button, Input, Label } from "./ui";
 
-const LOGO_URL = "https://media.base44.com/images/public/69f351e73d5a6169e8e9b7a5/82fc320ca_ChatGPTImageApr28202608_17_52PM.png";
+const LOGO_URL = "https://media.base44.com/images/public/6ac1daab80dea63a77ad8fa1/66582b089_Firefly.png";
 
 export default function Register() {
   const [params] = useSearchParams();
@@ -99,8 +99,8 @@ export default function Register() {
         </Link>
         <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
           <div className="bg-gradient-to-r from-amber-500 to-orange-600 p-8 text-center">
-            <img src={LOGO_URL} alt="Mamlakah" className="w-20 h-20 rounded-2xl mx-auto mb-4 object-cover shadow-lg" />
-            <h1 className="text-2xl font-bold text-white">Mamlakah Registration Form</h1>
+            <img src={LOGO_URL} alt="ProductPrime" className="w-20 h-20 rounded-2xl mx-auto mb-4 object-cover shadow-lg" />
+            <h1 className="text-2xl font-bold text-white">ProductPrime Registration Form</h1>
           </div>
           <form onSubmit={submit} className="p-8 space-y-5">
             {referrerInfo && (
