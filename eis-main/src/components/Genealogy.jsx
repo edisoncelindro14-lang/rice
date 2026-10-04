@@ -108,8 +108,8 @@ export default function Genealogy() {
           onClick={() => selectMember(member)}
           className={`group cursor-pointer relative w-48 rounded-2xl px-3.5 py-3.5 transition-all duration-300 hover:scale-105 hover:shadow-2xl border-2 ${
             isActive
-              ? "bg-gradient-to-br from-emerald-500 via-green-500 to-teal-600 border-emerald-300/50 text-white"
-              : "bg-gradient-to-br from-rose-500 via-red-500 to-rose-600 border-rose-300/50 text-white"
+              ? "bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 border-blue-300/50 text-white"
+              : "bg-gradient-to-br from-gray-800 via-black to-gray-900 border-gray-700/50 text-white"
           } ${isRoot ? "ring-4 ring-amber-400 ring-offset-2 ring-offset-gray-50" : ""}`}
         >
           {/* Subtle inner glow overlay */}
@@ -339,13 +339,13 @@ export default function Genealogy() {
 
       {/* Status Legend */}
       <div className="flex items-center gap-4 mb-4 flex-wrap">
-        <div className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 shadow-sm">
-          <span className="w-3 h-3 rounded-full bg-gradient-to-br from-emerald-400 to-green-600 animate-pulse shadow-sm shadow-emerald-500/50" />
-          <span className="text-sm font-semibold text-emerald-700">Active — Maintenance redeemed</span>
+        <div className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-sm">
+          <span className="w-3 h-3 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 animate-pulse shadow-sm shadow-blue-500/50" />
+          <span className="text-sm font-semibold text-blue-700">Active — Maintenance redeemed</span>
         </div>
-        <div className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-gradient-to-r from-rose-50 to-red-50 border border-rose-200 shadow-sm">
-          <span className="w-3 h-3 rounded-full bg-gradient-to-br from-rose-400 to-red-600 shadow-sm shadow-rose-500/50" />
-          <span className="text-sm font-semibold text-rose-700">Inactive — No maintenance</span>
+        <div className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-gradient-to-r from-gray-100 to-gray-200 border border-gray-300 shadow-sm">
+          <span className="w-3 h-3 rounded-full bg-gradient-to-br from-gray-700 to-black shadow-sm shadow-gray-800/50" />
+          <span className="text-sm font-semibold text-gray-800">Inactive — No maintenance</span>
         </div>
       </div>
 
@@ -398,10 +398,10 @@ export default function Genealogy() {
                   key={m.id}
                   onClick={() => { selectMember(m); setSearch(""); }}
                   className={`w-full text-left px-3 py-2.5 border-b border-gray-50 last:border-0 transition-colors flex items-center gap-2 ${
-                    selected?.id === m.id ? "bg-green-100" : "hover:bg-gray-50"
+                    selected?.id === m.id ? "bg-blue-100" : "hover:bg-gray-50"
                   }`}
                 >
-                  <span className={`w-2 h-2 rounded-full flex-shrink-0 ${isActive ? "bg-green-500" : "bg-red-500"}`} />
+                  <span className={`w-2 h-2 rounded-full flex-shrink-0 ${isActive ? "bg-blue-500" : "bg-black"}`} />
                   <div className="min-w-0">
                     <p className="font-medium text-gray-900 text-sm truncate">{m.username || m.full_name}</p>
                     <p className="text-xs text-gray-400 truncate">{isSuperAdmin ? `L${m.tree_level || 0}` : (m.id === currentMember?.id ? "You" : `L${(m.tree_level || 0) - (currentMember?.tree_level || 0)}`)} · {m.direct_downlines_count || 0}/8</p>
