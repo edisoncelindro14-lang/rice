@@ -12,6 +12,7 @@ const STATS = [
 ];
 
 const LOGO_URL = "https://media.base44.com/images/public/6ac1daab80dea63a77ad8fa1/66582b089_Firefly.png";
+const POSTER_URL = "https://media.base44.com/images/public/6ac1daab80dea63a77ad8fa1/fa783cdd0_Level68.png";
 const BG_URL = "https://media.base44.com/images/public/6a757d467583dc056bb9db29/acb40a8f7_pngtree-d-render-of-extruded-abstract-background-with-futuristic-black-and-gold-image_3711336.jpg";
 
 export default function Landing() {
@@ -56,6 +57,7 @@ export default function Landing() {
         >
           <div className="flex flex-col items-center mb-6">
             <img src={LOGO_URL} alt="ProductPrime Community" className="w-56 sm:w-72 mb-4 drop-shadow-2xl object-contain" />
+            <img src={POSTER_URL} alt="Kumikita Ka Ba sa Bigas na Binibili Mo?" className="w-56 sm:w-72 mb-4 rounded-2xl drop-shadow-2xl object-cover" />
             <div className="bg-amber-500/10 border border-amber-400/40 rounded-2xl px-6 py-4 max-w-3xl text-center">
               <p className="text-amber-300 font-bold text-lg sm:text-2xl md:text-3xl leading-snug tracking-wide drop-shadow-lg">MATTHEW 6:33</p>
               <p className="text-amber-100 font-semibold italic text-base sm:text-xl md:text-2xl leading-relaxed mt-1">
