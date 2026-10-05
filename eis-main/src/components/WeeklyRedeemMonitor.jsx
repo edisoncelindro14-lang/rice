@@ -52,10 +52,10 @@ export default function WeeklyRedeemMonitor({ rows, title = "Weekly Redeem Monit
             : "Week closed"}
         </div>
       </div>
-      <div className="overflow-auto max-h-[420px]">
+      <div className="overflow-auto max-h-[536px]"> {/* header 56px + 10 rows x 48px */}
         <table className="w-full">
           <thead className="sticky top-0 bg-white z-10">
-            <tr className="border-b border-gray-100">
+            <tr className="border-b border-gray-100 h-14">
               <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">User</th>
               {DAY_LABELS.map((l, i) => {
                 const d = new Date(start); d.setDate(d.getDate() + i);
@@ -68,7 +68,7 @@ export default function WeeklyRedeemMonitor({ rows, title = "Weekly Redeem Monit
           <tbody>
             {data.length === 0 ? <tr><td colSpan="10" className="text-center py-10 text-gray-400">No users to monitor</td></tr> :
             data.map(r => (
-              <tr key={r.username} className="border-b border-gray-50">
+              <tr key={r.username} className="border-b border-gray-50 h-12">
                 <td className="px-6 py-3 text-sm font-medium text-gray-900">@{r.username}</td>
                 {r.days.map((n, i) => <td key={i} className={`text-center px-2 py-3 text-sm ${n ? "font-semibold text-emerald-700" : "text-gray-300"}`}>{n || "–"}</td>)}
                 <td className="text-center px-4 py-3 text-sm font-bold text-gray-900">{r.total}/{WEEKLY_REDEEM_TARGET}</td>
