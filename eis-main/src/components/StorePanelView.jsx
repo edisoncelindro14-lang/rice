@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import { useTable } from "../lib/useData";
 import { formatDate } from "../lib/helpers";
 import { storeQuotaSummary, generateStoreCodes } from "../lib/storeQuota";
+import WeeklyRedeemMonitor from "./WeeklyRedeemMonitor";
 import StoreAvailableCodes from "./StoreAvailableCodes";
 import SearchableDropdown from "./SearchableDropdown";
 import { Button, Input, Label, Badge } from "./ui";
@@ -28,6 +29,12 @@ export default function StorePanelView({ store }) {
   const filteredGeneratedCodes = genSearchQ
     ? hideAdminCodes(q.generatedCodes).filter(c => (c.assigned_username || "").toLowerCase().includes(genSearchQ))
     : hideAdminCodes(q.generatedCodes);
+
+  // Per-user weekly monitor: every non-admin user this store designated codes to
+  const monitorRows = [...new Set(hideAdminCodes(q.generatedCodes).map(c => c.assigned_username).filter(Boolean))].map(u => {
+    const m = members.find(x => x.username === u);
+    return { username: u, usedAts: codes.filter(c => c.is_used && c.used_at && m && c.used_by_member_id === m.id).map(c => c.used_at) };
+  });
 
   async function generate() {
     const n = parseInt(count) || 0;
@@ -99,6 +106,8 @@ export default function StorePanelView({ store }) {
         </div>
         {q.remaining < 1 && <p className="text-sm text-red-500 mt-3">No remaining codes. Ask the admin to add more.</p>}
       </div>
+
+      <WeeklyRedeemMonitor title="Weekly Redeemed Codes (Mon – Sun)" rows={monitorRows} />
 
       {/* Available codes designated to members — searchable list */}
       <StoreAvailableCodes
