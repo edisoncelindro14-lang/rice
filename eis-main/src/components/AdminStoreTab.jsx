@@ -97,7 +97,7 @@ export default function AdminStoreTab({ approvedMembers, members, codes, quotas,
         ))}
       </div>
 
-      <AdminStorePanelMonitor storeMembers={storeMembers} codes={codes} quotas={quotas} />
+      <AdminStorePanelMonitor storeMembers={storeMembers} />
 
       {/* Allot codes */}
       <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-5">
