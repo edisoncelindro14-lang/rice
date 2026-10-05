@@ -367,7 +367,7 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center gap-2">
             <div className="flex-1 bg-white/15 rounded-xl px-4 py-3 border border-white/30 text-sm text-white truncate">{referralLink}</div>
-            <Button onClick={copyReferral} className="bg-white text-blue-700 hover:bg-blue-50 px-4 py-3 h-auto rounded-xl">
+            <Button onClick={copyReferral} className="!bg-white !text-blue-700 hover:!bg-blue-50 px-4 py-3 h-auto rounded-xl">
               {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
               <span className="ml-2 text-sm font-semibold">{copied ? "Copied!" : "Copy"}</span>
             </Button>

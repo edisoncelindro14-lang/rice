@@ -146,7 +146,7 @@ export default function CodeCabinet() {
                     disabled={!canRedeem || redeemBusyId === c.id}
                     className={!canRedeem
                       ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                      : "bg-blue-600 hover:bg-blue-700 text-white"}
+                      : "!bg-blue-600 hover:!bg-blue-700 !text-white"}
                     onClick={() => handleRedeem(c)}
                   >
                     {redeemBusyId === c.id ? "Redeeming..." : "Redeem"} {canRedeem && <ArrowRight className="w-3.5 h-3.5" />}
