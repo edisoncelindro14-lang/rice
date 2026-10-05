@@ -8,6 +8,7 @@ import { formatDate, maintenanceStatus } from "../lib/helpers";
 import { storeQuotaSummary, generateStoreCodes } from "../lib/storeQuota";
 import { redeemCodeForMember } from "../lib/redeem";
 import StoreAvailableCodes from "./StoreAvailableCodes";
+import SearchableDropdown from "./SearchableDropdown";
 import { Button, Input, Label, Badge } from "./ui";
 
 export default function Store() {
@@ -143,8 +144,7 @@ export default function Store() {
           </div>
           <div>
             <Label>Designate to username (optional)</Label>
-            <Input list="store-usernames" value={username} onChange={e => setUsername(e.target.value)} placeholder="Leave blank for unassigned" />
-            <datalist id="store-usernames">{usernames.map(u => <option key={u} value={u} />)}</datalist>
+            <SearchableDropdown value={username} onChange={setUsername} options={usernames} placeholder="Leave blank for unassigned" />
           </div>
           <Button onClick={generate} disabled={busy || q.remaining < 1} className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white h-10">{busy ? "Generating..." : "Generate"}</Button>
         </div>
@@ -167,8 +167,7 @@ export default function Store() {
         <div className="grid sm:grid-cols-[1fr_auto] gap-3 items-end">
           <div>
             <Label>Select member username</Label>
-            <Input list="store-redeem-usernames" value={redeemUsername} onChange={e => setRedeemUsername(e.target.value)} placeholder="Search username..." />
-            <datalist id="store-redeem-usernames">{usernames.map(u => <option key={u} value={u} />)}</datalist>
+            <SearchableDropdown value={redeemUsername} onChange={setRedeemUsername} options={usernames} placeholder="Search username..." />
           </div>
           <Button onClick={openRedeemModal} className="bg-teal-500 hover:bg-teal-600 text-white h-10"><Key className="w-4 h-4" /> Redeem</Button>
         </div>
