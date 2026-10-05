@@ -4,7 +4,6 @@ import toast from "react-hot-toast";
 import { useTable } from "../lib/useData";
 import { redeemCode } from "../lib/redeem";
 import { formatTime } from "../lib/helpers";
-import { Button } from "./ui";
 
 const CYCLE_MS = 24 * 3600 * 1000; // once a day
 const pad = n => String(n).padStart(2, "0");
@@ -29,8 +28,7 @@ export default function AutoRedeemPanel({ pending, member, members, codes, onDon
   });
   const { data: settings = [] } = useTable("system_settings");
   const adminTime = settings.find(x => x.setting_key === "auto_redeem_start_time")?.setting_value || "";
-  const [startInput, setStartInput] = useState(() => toTimeInput(Date.now()));
-  const [now, setNow] = useState(Date.now());
+    const [now, setNow] = useState(Date.now());
   const busy = useRef(false);
   const latest = useRef({});
   latest.current = { pending, members, codes, cfg };
@@ -45,14 +43,17 @@ export default function AutoRedeemPanel({ pending, member, members, codes, onDon
     return () => clearInterval(t);
   }, []);
 
+  // No buttons: whenever codes are available and the admin has set a start time, schedule starts automatically
   useEffect(() => {
     const { pending, members, codes, cfg } = latest.current;
-    if (!cfg.enabled || busy.current || Date.now() < cfg.nextAt) return;
+    if (busy.current) return;
     if (pending.length === 0) {
-      save({ enabled: false, nextAt: null });
-      toast.success("Auto-redeem finished — no more codes available.");
+      if (cfg.enabled) save({ enabled: false, nextAt: null });
       return;
     }
+    if (!adminTime) return;
+    if (!cfg.enabled) { save({ enabled: true, nextAt: nextOccurrence(adminTime) }); return; }
+    if (Date.now() < cfg.nextAt) return;
     busy.current = true;
     const oldest = [...pending].sort((a, b) => new Date(a.created_at) - new Date(b.created_at))[0];
     redeemCode(oldest, member, members, codes)
@@ -66,15 +67,7 @@ export default function AutoRedeemPanel({ pending, member, members, codes, onDon
         onDone?.();
         busy.current = false;
       });
-  }, [now]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  function enable() {
-    if (pending.length === 0) return toast.error("You need available codes to enable auto-redeem.");
-    const time = adminTime || startInput;
-    if (!time) return toast.error("Set a start time.");
-    save({ enabled: true, nextAt: nextOccurrence(time) });
-    toast.success("Auto-redeem enabled.");
-  }
+  }, [now, adminTime]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const secondsToNext = cfg.enabled ? Math.max(0, Math.ceil((cfg.nextAt - now) / 1000)) : 0;
 
@@ -85,33 +78,17 @@ export default function AutoRedeemPanel({ pending, member, members, codes, onDon
         <h2 className="text-lg font-bold text-gray-900">Auto-Redeem</h2>
       </div>
       <p className="text-sm text-gray-500 mb-4">
-        Redeems one available code at the time you set, then again once a day at the same time. Keep the app open for it to run.
+        Redeems one available code automatically at the start time set by the admin, then again once a day at the same time. Keep the app open for it to run.
       </p>
       {cfg.enabled ? (
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm font-semibold text-emerald-700 flex items-center gap-1">
-            <Clock className="w-4 h-4" />
-            {secondsToNext > 0 ? `Next code at ${new Date(cfg.nextAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit", hour12: true })} (in ${formatTime(secondsToNext)})` : "Redeeming…"} · {pending.length} code{pending.length === 1 ? "" : "s"} queued
-          </p>
-          <Button size="sm" variant="outline" onClick={() => save({ enabled: false, nextAt: null })}>Disable Auto-Redeem</Button>
-        </div>
+        <p className="text-sm font-semibold text-emerald-700 flex items-center gap-1">
+          <Clock className="w-4 h-4" />
+          {secondsToNext > 0 ? `Next code at ${new Date(cfg.nextAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit", hour12: true })} (in ${formatTime(secondsToNext)})` : "Redeeming…"} · {pending.length} code{pending.length === 1 ? "" : "s"} queued
+        </p>
       ) : (
-        <div className="flex flex-wrap items-end gap-3">
-          {adminTime ? (
-            <p className="text-sm text-gray-600">Start time set by admin: <span className="font-semibold">{new Date(`2000-01-01T${adminTime}`).toLocaleTimeString([], { hour: "numeric", minute: "2-digit", hour12: true })}</span></p>
-          ) : (
-            <label className="text-sm text-gray-600">
-              <span className="block mb-1">Start time</span>
-              <input type="time" value={startInput} onChange={e => setStartInput(e.target.value)}
-                className="border border-gray-200 rounded-lg px-3 py-2 text-gray-900" />
-            </label>
-          )}
-          <Button size="sm" disabled={pending.length === 0} onClick={enable}
-            className={pending.length === 0 ? "bg-gray-300 text-gray-500 cursor-not-allowed" : "!bg-amber-500 hover:!bg-amber-600 !text-white"}>
-            Enable Auto-Redeem
-          </Button>
-          {pending.length === 0 && <p className="text-xs text-gray-400">No available codes.</p>}
-        </div>
+        <p className="text-xs text-gray-400">
+          {pending.length === 0 ? "No available codes." : "Waiting for the admin to set the auto-redeem start time."}
+        </p>
       )}
     </div>
   );
