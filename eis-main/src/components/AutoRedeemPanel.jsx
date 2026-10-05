@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Zap, Clock } from "lucide-react";
 import toast from "react-hot-toast";
+import { useTable } from "../lib/useData";
 import { redeemCode } from "../lib/redeem";
 import { formatTime } from "../lib/helpers";
 import { Button } from "./ui";
@@ -26,6 +27,8 @@ export default function AutoRedeemPanel({ pending, member, members, codes, onDon
     try { return JSON.parse(localStorage.getItem(storeKey)) || { enabled: false, nextAt: null }; }
     catch { return { enabled: false, nextAt: null }; }
   });
+  const { data: settings = [] } = useTable("system_settings");
+  const adminTime = settings.find(x => x.setting_key === "auto_redeem_start_time")?.setting_value || "";
   const [startInput, setStartInput] = useState(() => toTimeInput(Date.now()));
   const [now, setNow] = useState(Date.now());
   const busy = useRef(false);
@@ -67,8 +70,9 @@ export default function AutoRedeemPanel({ pending, member, members, codes, onDon
 
   function enable() {
     if (pending.length === 0) return toast.error("You need available codes to enable auto-redeem.");
-    if (!startInput) return toast.error("Set a start time.");
-    save({ enabled: true, nextAt: nextOccurrence(startInput) });
+    const time = adminTime || startInput;
+    if (!time) return toast.error("Set a start time.");
+    save({ enabled: true, nextAt: nextOccurrence(time) });
     toast.success("Auto-redeem enabled.");
   }
 
@@ -93,11 +97,15 @@ export default function AutoRedeemPanel({ pending, member, members, codes, onDon
         </div>
       ) : (
         <div className="flex flex-wrap items-end gap-3">
-          <label className="text-sm text-gray-600">
-            <span className="block mb-1">Start time</span>
-            <input type="time" value={startInput} onChange={e => setStartInput(e.target.value)}
-              className="border border-gray-200 rounded-lg px-3 py-2 text-gray-900" />
-          </label>
+          {adminTime ? (
+            <p className="text-sm text-gray-600">Start time set by admin: <span className="font-semibold">{new Date(`2000-01-01T${adminTime}`).toLocaleTimeString([], { hour: "numeric", minute: "2-digit", hour12: true })}</span></p>
+          ) : (
+            <label className="text-sm text-gray-600">
+              <span className="block mb-1">Start time</span>
+              <input type="time" value={startInput} onChange={e => setStartInput(e.target.value)}
+                className="border border-gray-200 rounded-lg px-3 py-2 text-gray-900" />
+            </label>
+          )}
           <Button size="sm" disabled={pending.length === 0} onClick={enable}
             className={pending.length === 0 ? "bg-gray-300 text-gray-500 cursor-not-allowed" : "!bg-amber-500 hover:!bg-amber-600 !text-white"}>
             Enable Auto-Redeem
