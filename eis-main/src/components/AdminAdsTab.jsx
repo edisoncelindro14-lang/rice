@@ -4,9 +4,33 @@ import { Upload, Trash2 } from "lucide-react";
 import { useTable, updateRecord, createRecord } from "../lib/useData";
 import { parseAd, adImages } from "./AdBanner";
 import { Button } from "./ui";
-import { supabase } from "../lib/supabase";
 
 const MAX_VIDEO = 500 * 1024 * 1024;
+const CLOUD = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+const PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+
+// Chunked unsigned upload to Cloudinary (supports large files). Returns the secure URL.
+async function uploadVideo(file, onProgress) {
+  if (!CLOUD || !PRESET) throw new Error("Cloudinary is not configured");
+  const url = `https://api.cloudinary.com/v1_1/${CLOUD}/video/upload`;
+  const uid = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const CHUNK = 20 * 1024 * 1024;
+  let json;
+  for (let start = 0; start < file.size; start += CHUNK) {
+    const end = Math.min(start + CHUNK, file.size);
+    const fd = new FormData();
+    fd.append("file", file.slice(start, end), file.name);
+    fd.append("upload_preset", PRESET);
+    const res = await fetch(url, {
+      method: "POST", body: fd,
+      headers: { "X-Unique-Upload-Id": uid, "Content-Range": `bytes ${start}-${end - 1}/${file.size}` },
+    });
+    json = await res.json();
+    if (!res.ok) throw new Error(json?.error?.message || "Upload failed");
+    onProgress?.(Math.round((end / file.size) * 100));
+  }
+  return json.secure_url;
+}
 
 const DRAFT_KEY = "ads_draft";
 const PUBLISHED_KEY = "ads_published";
@@ -44,11 +68,10 @@ export default function AdminAdsTab() {
     for (const file of files) {
       if (file.type.startsWith("video/")) {
         if (file.size > MAX_VIDEO) { toast.error(`${file.name} is over 500MB`); continue; }
-        const ext = (file.name.split(".").pop() || "mp4").toLowerCase();
-        const path = `videos/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-        const { error } = await supabase.storage.from("ads").upload(path, file, { contentType: file.type });
-        if (error) { toast.error(`Video upload failed: ${error.message}`); continue; }
-        added.push({ type: "video", src: supabase.storage.from("ads").getPublicUrl(path).data.publicUrl });
+        try {
+          const src = await uploadVideo(file, p => setUploading(`${p}%`));
+          added.push({ type: "video", src });
+        } catch (err) { toast.error(`Video upload failed: ${err.message}`); }
         continue;
       }
       if (!file.type.startsWith("image/")) { toast.error(`${file.name} is not an image or video`); continue; }
@@ -92,7 +115,7 @@ export default function AdminAdsTab() {
         <label className="block text-sm font-medium text-gray-700 mb-1">Promote images / videos (video up to 500MB)</label>
         <div className="flex items-center gap-3">
           <label className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-600 text-white text-sm font-medium cursor-pointer hover:bg-purple-700">
-            <Upload className="w-4 h-4" /> {uploading ? "Uploading..." : "Upload Images / Videos"}
+            <Upload className="w-4 h-4" /> {uploading ? `Uploading${typeof uploading === "string" ? " " + uploading : "..."}` : "Upload Images / Videos"}
             <input type="file" accept="image/*,video/*" multiple disabled={uploading} className="hidden" onChange={onFile} />
           </label>
           {cur && (
