@@ -3,14 +3,26 @@ import { supabase } from "./supabase";
 import { getSessionMemberId } from "./auth";
 
 // Last result per query, so revisiting a page shows data instantly while it refreshes silently.
-const cache = new Map();
-export const clearDataCache = () => cache.clear();
+// Persisted in sessionStorage so a full page refresh also renders instantly from the last result.
+const CACHE_KEY = "mlm_data_cache";
+let initial = [];
+try { initial = JSON.parse(sessionStorage.getItem(CACHE_KEY) || "[]"); } catch { /* ignore */ }
+const cache = new Map(initial);
+let persistTimer = null;
+function persistCache() {
+  clearTimeout(persistTimer);
+  persistTimer = setTimeout(() => {
+    try { sessionStorage.setItem(CACHE_KEY, JSON.stringify([...cache])); } catch { /* quota: skip */ }
+  }, 300);
+}
+const setCache = (key, value) => { cache.set(key, value); persistCache(); };
+export const clearDataCache = () => { cache.clear(); try { sessionStorage.removeItem(CACHE_KEY); } catch { /* ignore */ } };
 
 // Warm the cache for unfiltered tables (e.g. right after login) so the next page renders instantly.
 export function prefetchTables(names) {
   names.forEach(async (name) => {
     const { data, error } = await supabase.from(name).select("*");
-    if (!error) cache.set(`${name}|null|null|null`, data || []);
+    if (!error) setCache(`${name}|null|null|null`, data || []);
   });
 }
 
@@ -46,7 +58,7 @@ export function useTable(tableName, options = {}) {
       }
       if (limit) query = query.limit(limit);
       const { data: result, error } = await query;
-      if (!error) { cache.set(cacheKey, result || []); setData(result || []); loadedOnce.current = true; }
+      if (!error) { setCache(cacheKey, result || []); setData(result || []); loadedOnce.current = true; }
     } catch (e) {
       console.error(`Error fetching ${tableName}:`, e);
     }
