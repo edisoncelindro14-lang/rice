@@ -5,7 +5,7 @@ import { redeemCode } from "../lib/redeem";
 import { formatTime } from "../lib/helpers";
 import { Button } from "./ui";
 
-const CYCLE_MS = 12 * 3600 * 1000;
+const CYCLE_MS = 24 * 3600 * 1000; // once a day
 const pad = n => String(n).padStart(2, "0");
 const toTimeInput = ms => `${pad(new Date(ms).getHours())}:${pad(new Date(ms).getMinutes())}`;
 
@@ -19,7 +19,7 @@ function nextOccurrence(hhmm) {
 }
 
 // Auto-redeem: redeems one available code at the chosen time of day, then again every
-// 12 hours on the same clock schedule (e.g. 9:00 AM -> 9:00 PM -> 9:00 AM ...), until no codes are left.
+// day at the same clock time (e.g. 9:00 AM every day), until no codes are left.
 export default function AutoRedeemPanel({ pending, member, members, codes, onDone }) {
   const storeKey = `auto_redeem_${member.id}`;
   const [cfg, setCfg] = useState(() => {
@@ -56,7 +56,7 @@ export default function AutoRedeemPanel({ pending, member, members, codes, onDon
       .then(r => toast.success(`Auto-redeem: ${r.message}`))
       .catch(err => toast.error(`Auto-redeem failed: ${err.message || "error"}`))
       .finally(() => {
-        // keep the same clock time: advance the schedule in 12h steps, never drifting
+        // keep the same clock time: advance the schedule in 24h steps, never drifting
         let next = latest.current.cfg.nextAt + CYCLE_MS;
         while (next <= Date.now()) next += CYCLE_MS;
         save({ enabled: true, nextAt: next });
@@ -81,13 +81,13 @@ export default function AutoRedeemPanel({ pending, member, members, codes, onDon
         <h2 className="text-lg font-bold text-gray-900">Auto-Redeem</h2>
       </div>
       <p className="text-sm text-gray-500 mb-4">
-        Redeems one available code at the time you set, then again every 12 hours at the same clock time. Keep the app open for it to run.
+        Redeems one available code at the time you set, then again once a day at the same time. Keep the app open for it to run.
       </p>
       {cfg.enabled ? (
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm font-semibold text-emerald-700 flex items-center gap-1">
             <Clock className="w-4 h-4" />
-            {secondsToNext > 0 ? `Next code at ${toTimeInput(cfg.nextAt)} (in ${formatTime(secondsToNext)})` : "Redeeming…"} · {pending.length} code{pending.length === 1 ? "" : "s"} queued
+            {secondsToNext > 0 ? `Next code at ${new Date(cfg.nextAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit", hour12: true })} (in ${formatTime(secondsToNext)})` : "Redeeming…"} · {pending.length} code{pending.length === 1 ? "" : "s"} queued
           </p>
           <Button size="sm" variant="outline" onClick={() => save({ enabled: false, nextAt: null })}>Disable Auto-Redeem</Button>
         </div>
