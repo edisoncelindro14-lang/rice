@@ -20,11 +20,14 @@ export default function StorePanelView({ store }) {
   const [genSearch, setGenSearch] = useState("");
 
   const q = storeQuotaSummary(store.id, quotas, codes);
-  const usernames = members.filter(m => m.status === "approved").map(m => m.username);
+  const isAdminRole = m => m.role === "admin" || m.role === "sub_admin";
+  const adminNames = new Set(members.filter(isAdminRole).map(m => m.username));
+  const usernames = members.filter(m => m.status === "approved" && !isAdminRole(m)).map(m => m.username);
+  const hideAdminCodes = list => list.filter(c => !adminNames.has(c.assigned_username));
   const genSearchQ = genSearch.trim().toLowerCase();
   const filteredGeneratedCodes = genSearchQ
-    ? q.generatedCodes.filter(c => (c.assigned_username || "").toLowerCase().includes(genSearchQ))
-    : q.generatedCodes;
+    ? hideAdminCodes(q.generatedCodes).filter(c => (c.assigned_username || "").toLowerCase().includes(genSearchQ))
+    : hideAdminCodes(q.generatedCodes);
 
   async function generate() {
     const n = parseInt(count) || 0;
@@ -101,7 +104,7 @@ export default function StorePanelView({ store }) {
       <StoreAvailableCodes
         storeId={store.id}
         members={members}
-        codes={codes}
+        codes={hideAdminCodes(codes)}
         refetchCodes={refetchCodes}
         refetchHistory={refetchHistory}
         onRedeemDone={() => setPhonebookVersion(v => v + 1)}
