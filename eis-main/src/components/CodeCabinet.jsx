@@ -123,8 +123,6 @@ export default function CodeCabinet() {
         member={currentMember}
         members={members}
         codes={codes}
-        canRedeem={canRedeem}
-        unlockSeconds={Math.max(0, lockSeconds - REDEEM_UNLOCK_THRESHOLD)}
         onDone={() => { refetchCodes(); refetchHistory(); }}
       />
 
