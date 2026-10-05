@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { User, Lock, ArrowRight, Eye, EyeOff } from "lucide-react";
 import toast from "react-hot-toast";
 import { supabase } from "../lib/supabase";
+import { prefetchTables } from "../lib/useData";
 import { saveMemberSession } from "../lib/auth";
 import AuthShell, { ORANGE_GRADIENT } from "./AuthShell";
 import AuthInput from "./AuthInput";
@@ -34,6 +35,7 @@ export default function Login() {
         return;
       }
       saveMemberSession(member.id);
+      prefetchTables(["members", "system_settings", "maintenance_codes", "transactions"]);
       toast.success(`Welcome back, ${member.full_name}!`);
       nav("/Dashboard");
     } catch (err) {

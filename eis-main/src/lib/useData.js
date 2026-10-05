@@ -6,6 +6,14 @@ import { getSessionMemberId } from "./auth";
 const cache = new Map();
 export const clearDataCache = () => cache.clear();
 
+// Warm the cache for unfiltered tables (e.g. right after login) so the next page renders instantly.
+export function prefetchTables(names) {
+  names.forEach(async (name) => {
+    const { data, error } = await supabase.from(name).select("*");
+    if (!error) cache.set(`${name}|null|null|null`, data || []);
+  });
+}
+
 // Generic data fetcher hook (replaces React Query for simplicity)
 export function useTable(tableName, options = {}) {
   const { filter = null, order = null, limit = null, enabled = true } = options;

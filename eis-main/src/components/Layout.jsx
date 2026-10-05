@@ -46,7 +46,7 @@ export default function Layout({ children, currentPageName }) {
       .on("postgres_changes", { event: "*", schema: "public", table: "system_settings" }, () => refetchSettings())
       .subscribe();
     // Polling fallback in case realtime is not enabled
-    const interval = setInterval(() => refetchSettings(), 3000);
+    const interval = setInterval(() => refetchSettings(), 15000);
     return () => { supabase.removeChannel(channel); clearInterval(interval); };
   }, [refetchSettings]);
 
