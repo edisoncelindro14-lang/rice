@@ -6,6 +6,7 @@ import { formatDate } from "../lib/helpers";
 import { storeQuotaSummary } from "../lib/storeQuota";
 import { Button, Input, Label, Badge } from "./ui";
 import SearchableDropdown from "./SearchableDropdown";
+import AdminStorePanelMonitor from "./AdminStorePanelMonitor";
 
 const storeLabel = s => `@${s.username} — ${s.full_name}`;
 
@@ -95,6 +96,8 @@ export default function AdminStoreTab({ approvedMembers, members, codes, quotas,
           </div>
         ))}
       </div>
+
+      <AdminStorePanelMonitor storeMembers={storeMembers} codes={codes} quotas={quotas} />
 
       {/* Allot codes */}
       <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-5">
