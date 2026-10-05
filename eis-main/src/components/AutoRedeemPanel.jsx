@@ -18,6 +18,20 @@ function nextOccurrence(hhmm) {
   return d.getTime();
 }
 
+// Everyone redeems at the same admin-set time, but commissions only pay uplines whose own code is
+// already active. So each member waits a short time proportional to their depth in the tree:
+// uplines redeem first, downlines after, and the normal commission logic (unchanged) pays correctly.
+const STEP_MS = 2000;
+const MAX_WAIT_MS = 30000;
+function treeDelay(member, members) {
+  let depth = 0, cur = member;
+  while (cur?.referrer_id && depth < 50) {
+    cur = members.find(m => m.id === cur.referrer_id);
+    if (cur) depth++;
+  }
+  return Math.min(depth * STEP_MS, MAX_WAIT_MS);
+}
+
 // Auto-redeem: redeems one available code at the chosen time of day, then again every
 // day at the same clock time (e.g. 9:00 AM every day), until no codes are left.
 export default function AutoRedeemPanel({ pending, member, members, codes, onDone }) {
@@ -56,7 +70,8 @@ export default function AutoRedeemPanel({ pending, member, members, codes, onDon
     if (Date.now() < cfg.nextAt) return;
     busy.current = true;
     const oldest = [...pending].sort((a, b) => new Date(a.created_at) - new Date(b.created_at))[0];
-    redeemCode(oldest, member, members, codes)
+    new Promise(res => setTimeout(res, treeDelay(member, members)))
+      .then(() => redeemCode(oldest, member, members, codes))
       .then(r => toast.success(`Auto-redeem: ${r.message}`))
       .catch(err => toast.error(`Auto-redeem failed: ${err.message || "error"}`))
       .finally(() => {
