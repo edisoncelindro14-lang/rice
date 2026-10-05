@@ -8,7 +8,6 @@ import { supabase } from "../lib/supabase";
 import { redeemCode } from "../lib/redeem";
 import { money, formatDate, withdrawalCharge, LEVEL_CONFIG, MAX_BONUS_LEVEL, maintenanceStatus } from "../lib/helpers";
 import { Button, Badge } from "./ui";
-import AdBanner from "./AdBanner";
 
 export default function Dashboard() {
   const [showHistory, setShowHistory] = useState(false);
@@ -178,7 +177,6 @@ export default function Dashboard() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-      <AdBanner />
 
       {/* Top action buttons */}
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-6 flex justify-end gap-2 sm:gap-3">

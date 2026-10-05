@@ -2,12 +2,18 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "./supabase";
 import { getSessionMemberId } from "./auth";
 
+// Last result per query, so revisiting a page shows data instantly while it refreshes silently.
+const cache = new Map();
+export const clearDataCache = () => cache.clear();
+
 // Generic data fetcher hook (replaces React Query for simplicity)
 export function useTable(tableName, options = {}) {
   const { filter = null, order = null, limit = null, enabled = true } = options;
-  const [data, setData] = useState([]);
-  const [isLoading, setIsLoading] = useState(enabled);
-  const loadedOnce = useRef(false);
+  const cacheKey = `${tableName}|${JSON.stringify(filter)}|${order}|${limit}`;
+  const cached = cache.get(cacheKey);
+  const [data, setData] = useState(cached ?? []);
+  const [isLoading, setIsLoading] = useState(enabled && !cached);
+  const loadedOnce = useRef(!!cached);
 
   const fetchData = useCallback(async () => {
     if (!enabled) return;
@@ -32,12 +38,12 @@ export function useTable(tableName, options = {}) {
       }
       if (limit) query = query.limit(limit);
       const { data: result, error } = await query;
-      if (!error) { setData(result || []); loadedOnce.current = true; }
+      if (!error) { cache.set(cacheKey, result || []); setData(result || []); loadedOnce.current = true; }
     } catch (e) {
       console.error(`Error fetching ${tableName}:`, e);
     }
     setIsLoading(false);
-  }, [tableName, JSON.stringify(filter), order, limit, enabled]);
+  }, [cacheKey, tableName, JSON.stringify(filter), order, limit, enabled]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
   return { data, isLoading, refetch: fetchData };
