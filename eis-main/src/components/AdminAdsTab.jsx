@@ -9,10 +9,10 @@ const MAX_VIDEO = 500 * 1024 * 1024;
 const CLOUD = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
 const PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
-// Chunked unsigned upload to Cloudinary (supports large files). Returns the secure URL.
-async function uploadVideo(file, onProgress) {
+// Chunked unsigned upload to Cloudinary into the "ads" folder. Returns { src, public_id }.
+async function uploadMedia(file, resourceType, onProgress) {
   if (!CLOUD || !PRESET) throw new Error("Cloudinary is not configured");
-  const url = `https://api.cloudinary.com/v1_1/${CLOUD}/video/upload`;
+  const url = `https://api.cloudinary.com/v1_1/${CLOUD}/${resourceType}/upload`;
   const uid = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   const CHUNK = 20 * 1024 * 1024;
   let json;
@@ -21,6 +21,7 @@ async function uploadVideo(file, onProgress) {
     const fd = new FormData();
     fd.append("file", file.slice(start, end), file.name);
     fd.append("upload_preset", PRESET);
+    fd.append("folder", "ads");
     const res = await fetch(url, {
       method: "POST", body: fd,
       headers: { "X-Unique-Upload-Id": uid, "Content-Range": `bytes ${start}-${end - 1}/${file.size}` },
@@ -29,7 +30,16 @@ async function uploadVideo(file, onProgress) {
     if (!res.ok) throw new Error(json?.error?.message || "Upload failed");
     onProgress?.(Math.round((end / file.size) * 100));
   }
-  return json.secure_url;
+  return { src: json.secure_url, public_id: json.public_id };
+}
+
+async function deleteFromCloudinary(im) {
+  const res = await fetch("/api/cloudinary-delete", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ public_id: im.public_id, resource_type: im.type }),
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(json.error || "Could not delete from Cloudinary");
 }
 
 const DRAFT_KEY = "ads_draft";
@@ -69,15 +79,17 @@ export default function AdminAdsTab() {
       if (file.type.startsWith("video/")) {
         if (file.size > MAX_VIDEO) { toast.error(`${file.name} is over 500MB`); continue; }
         try {
-          const src = await uploadVideo(file, p => setUploading(`${p}%`));
-          added.push({ type: "video", src });
+          const m = await uploadMedia(file, "video", p => setUploading(`${p}%`));
+          added.push({ type: "video", ...m });
         } catch (err) { toast.error(`Video upload failed: ${err.message}`); }
         continue;
       }
       if (!file.type.startsWith("image/")) { toast.error(`${file.name} is not an image or video`); continue; }
-      if (file.size > 2 * 1024 * 1024) { toast.error(`${file.name} is over 2MB`); continue; }
-      const src = await new Promise(res => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(file); });
-      added.push({ type: "image", src, x: 50, y: 50 });
+      if (file.size > 10 * 1024 * 1024) { toast.error(`${file.name} is over 10MB`); continue; }
+      try {
+        const m = await uploadMedia(file, "image", p => setUploading(`${p}%`));
+        added.push({ type: "image", ...m, x: 50, y: 50 });
+      } catch (err) { toast.error(`Image upload failed: ${err.message}`); }
     }
     setUploading(false);
     if (added.length) { setSel(images.length); setImages(prev => [...prev, ...added]); }
@@ -85,9 +97,21 @@ export default function AdminAdsTab() {
 
   const cur = images[sel];
   const setPos = p => setImages(prev => prev.map((im, i) => (i === sel ? { ...im, ...p } : im)));
-  function removeCur() {
-    setImages(prev => prev.filter((_, i) => i !== sel));
-    setSel(0);
+  // Deletes the file from Cloudinary and removes it from the saved draft and published ad (Supabase).
+  async function removeCur() {
+    if (!cur || !window.confirm("Delete this file permanently? It will also be removed from Cloudinary.")) return;
+    setBusy(true);
+    try {
+      if (cur.public_id) await deleteFromCloudinary(cur);
+      const rest = images.filter((_, i) => i !== sel);
+      const strip = ad => JSON.stringify({ ...ad, images: adImages(ad).filter(im => im.src !== cur.src), image: undefined, x: undefined, y: undefined });
+      setImages(rest); setSel(0);
+      await save(DRAFT_KEY, JSON.stringify({ announcement, images: rest }));
+      if (published) await save(PUBLISHED_KEY, strip(published));
+      await refetch();
+      toast.success("Deleted from Cloudinary and your ad");
+    } catch (err) { toast.error(err?.message || "Delete failed"); }
+    setBusy(false);
   }
 
   async function run(fn, msg) {
