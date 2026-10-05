@@ -3,7 +3,8 @@ import { Zap, Clock } from "lucide-react";
 import toast from "react-hot-toast";
 import { useTable } from "../lib/useData";
 import { redeemCode } from "../lib/redeem";
-import { formatTime } from "../lib/helpers";
+import { formatTime, maintenanceStatus, MAX_BONUS_LEVEL } from "../lib/helpers";
+import { supabase } from "../lib/supabase";
 
 const CYCLE_MS = 24 * 3600 * 1000; // once a day
 const pad = n => String(n).padStart(2, "0");
@@ -19,17 +20,29 @@ function nextOccurrence(hhmm) {
 }
 
 // Everyone redeems at the same admin-set time, but commissions only pay uplines whose own code is
-// already active. So each member waits a short time proportional to their depth in the tree:
-// uplines redeem first, downlines after, and the normal commission logic (unchanged) pays correctly.
-const STEP_MS = 2000;
+// already active (5-level ComPlan). So before redeeming, wait until the up-to-5 uplines above who
+// still have a code to redeem have gone first. Safety timeout so nobody waits forever (e.g. offline upline).
+const POLL_MS = 2000;
 const MAX_WAIT_MS = 30000;
-function treeDelay(member, members) {
-  let depth = 0, cur = member;
-  while (cur?.referrer_id && depth < 50) {
-    cur = members.find(m => m.id === cur.referrer_id);
-    if (cur) depth++;
+async function waitForUplines(member) {
+  const started = Date.now();
+  while (Date.now() - started < MAX_WAIT_MS) {
+    const [{ data: ms }, { data: cs }] = await Promise.all([
+      supabase.from("members").select("*"),
+      supabase.from("maintenance_codes").select("*"),
+    ]);
+    if (!ms || !cs) return;
+    let cur = member, blocked = false;
+    for (let level = 1; level <= MAX_BONUS_LEVEL; level++) {
+      const up = ms.find(m => m.id === cur?.referrer_id);
+      if (!up) break;
+      const willRedeem = cs.some(c => !c.is_used && c.assigned_username === up.username);
+      if (up.status === "approved" && willRedeem && !maintenanceStatus(up, cs).isGreen) { blocked = true; break; }
+      cur = up;
+    }
+    if (!blocked) return;
+    await new Promise(res => setTimeout(res, POLL_MS));
   }
-  return Math.min(depth * STEP_MS, MAX_WAIT_MS);
 }
 
 // Auto-redeem: redeems one available code at the chosen time of day, then again every
@@ -70,7 +83,7 @@ export default function AutoRedeemPanel({ pending, member, members, codes, onDon
     if (Date.now() < cfg.nextAt) return;
     busy.current = true;
     const oldest = [...pending].sort((a, b) => new Date(a.created_at) - new Date(b.created_at))[0];
-    new Promise(res => setTimeout(res, treeDelay(member, members)))
+    waitForUplines(member)
       .then(() => redeemCode(oldest, member, members, codes))
       .then(r => toast.success(`Auto-redeem: ${r.message}`))
       .catch(err => toast.error(`Auto-redeem failed: ${err.message || "error"}`))
