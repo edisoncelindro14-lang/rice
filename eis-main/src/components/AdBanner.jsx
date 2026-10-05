@@ -18,7 +18,7 @@ export default function AdBanner() {
 
   return (
     <div className="mb-6 bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
-      {ad.image && <img src={ad.image} alt="Promotion" className="w-full max-h-96 object-cover" />}
+      {ad.image && <div className="w-full aspect-[16/9]"><img src={ad.image} alt="Promotion" className="w-full h-full object-cover" style={{ objectPosition: `${ad.x ?? 50}% ${ad.y ?? 50}%` }} /></div>}
       {ad.announcement && <p className="p-4 text-gray-800 font-medium whitespace-pre-wrap">{ad.announcement}</p>}
     </div>
   );

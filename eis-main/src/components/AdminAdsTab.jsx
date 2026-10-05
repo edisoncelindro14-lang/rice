@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import toast from "react-hot-toast";
 import { Upload, Trash2 } from "lucide-react";
 import { useTable, updateRecord, createRecord } from "../lib/useData";
@@ -12,6 +12,8 @@ export default function AdminAdsTab() {
   const { data: settings = [], refetch } = useTable("system_settings");
   const [announcement, setAnnouncement] = useState("");
   const [image, setImage] = useState("");
+  const [pos, setPos] = useState({ x: 50, y: 50 });
+  const drag = useRef(null);
   const [loaded, setLoaded] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -20,7 +22,7 @@ export default function AdminAdsTab() {
   useEffect(() => {
     if (loaded || settings.length === 0) return;
     const draft = parseAd(settings.find(s => s.setting_key === DRAFT_KEY)?.setting_value) || published;
-    if (draft) { setAnnouncement(draft.announcement || ""); setImage(draft.image || ""); }
+    if (draft) { setAnnouncement(draft.announcement || ""); setImage(draft.image || ""); setPos({ x: draft.x ?? 50, y: draft.y ?? 50 }); }
     setLoaded(true);
   }, [settings]);
 
@@ -36,7 +38,7 @@ export default function AdminAdsTab() {
     if (!file.type.startsWith("image/")) return toast.error("Please choose an image file");
     if (file.size > 2 * 1024 * 1024) return toast.error("Image must be under 2MB");
     const reader = new FileReader();
-    reader.onload = () => setImage(reader.result);
+    reader.onload = () => { setImage(reader.result); setPos({ x: 50, y: 50 }); };
     reader.readAsDataURL(file);
     e.target.value = "";
   }
@@ -48,7 +50,7 @@ export default function AdminAdsTab() {
     setBusy(false);
   }
 
-  const json = () => JSON.stringify({ announcement, image });
+  const json = () => JSON.stringify({ announcement, image, x: pos.x, y: pos.y });
 
   return (
     <div className="bg-white rounded-3xl shadow-lg border border-gray-100 p-6 space-y-5">
@@ -75,7 +77,23 @@ export default function AdminAdsTab() {
             </button>
           )}
         </div>
-        {image && <img src={image} alt="Preview" className="mt-3 w-full max-h-72 object-cover rounded-2xl border" />}
+        {image && (
+          <>
+            <div className="mt-3 w-full aspect-[16/9] overflow-hidden rounded-2xl border cursor-grab active:cursor-grabbing touch-none select-none"
+              onPointerDown={e => { e.currentTarget.setPointerCapture(e.pointerId); drag.current = { px: e.clientX, py: e.clientY, ...pos }; }}
+              onPointerUp={() => { drag.current = null; }}
+              onPointerMove={e => {
+                const d = drag.current; if (!d) return;
+                const r = e.currentTarget.getBoundingClientRect();
+                const clamp = v => Math.max(0, Math.min(100, v));
+                setPos({ x: clamp(d.x - ((e.clientX - d.px) / r.width) * 100), y: clamp(d.y - ((e.clientY - d.py) / r.height) * 100) });
+              }}>
+              <img src={image} alt="Preview" draggable={false} className="w-full h-full object-cover pointer-events-none"
+                style={{ objectPosition: `${pos.x}% ${pos.y}%` }} />
+            </div>
+            <p className="text-xs text-gray-500 mt-1">Drag the image to adjust what is displayed.</p>
+          </>
+        )}
       </div>
       <div className="flex flex-wrap gap-3">
         <Button disabled={busy} onClick={() => run(() => save(DRAFT_KEY, json()), "Draft saved")}
