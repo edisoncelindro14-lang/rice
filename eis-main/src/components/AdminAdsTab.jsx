@@ -92,7 +92,13 @@ export default function AdminAdsTab() {
       } catch (err) { toast.error(`Image upload failed: ${err.message}`); }
     }
     setUploading(false);
-    if (added.length) { setSel(images.length); setImages(prev => [...prev, ...added]); }
+    if (added.length) {
+      const all = [...images, ...added];
+      setSel(images.length); setImages(all);
+      // Save right away so an upload is never lost (and left orphaned in Cloudinary) if the page is closed.
+      try { await save(DRAFT_KEY, JSON.stringify({ announcement, images: all })); await refetch(); }
+      catch (err) { toast.error(`Uploaded, but could not save draft: ${err?.message || "error"}`); }
+    }
   }
 
   const cur = images[sel];
