@@ -133,7 +133,7 @@ export default function AdminStoreTab({ approvedMembers, members, codes, quotas,
                     <td className="px-6 py-4 text-sm text-gray-700">{q.generated}</td>
                     <td className="px-6 py-4"><Badge className={q.remaining > 0 ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"}>{q.remaining}</Badge></td>
                     <td className="px-6 py-4 text-sm text-gray-500">{q.allotments[0] ? formatDate(q.allotments[0].created_date) : "—"}</td>
-                    <td className="px-6 py-4"><Button onClick={() => setRole(s.id, "member")} size="sm" variant="outline" className="border-red-200 text-red-600 hover:bg-red-50 h-8 px-3 text-xs">Remove Store</Button></td>
+                    <td className="px-6 py-4"><Button onClick={() => { if (window.confirm(`Remove @${s.username} as a Store? They will become a regular member.`)) setRole(s.id, "member"); }} size="sm" variant="outline" className="border-red-200 text-red-600 hover:bg-red-50 h-8 px-3 text-xs">Remove Store</Button></td>
                   </tr>
                 );
               })}
