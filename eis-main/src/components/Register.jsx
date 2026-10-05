@@ -17,6 +17,14 @@ export default function Register() {
   const [busy, setBusy] = useState(false);
   const [referrerInfo, setReferrerInfo] = useState(null);
   const [usernameStatus, setUsernameStatus] = useState("idle"); // idle | checking | taken | available
+  const [termsVisible, setTermsVisible] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.from("system_settings").select("setting_value").eq("setting_key", "tab_terms_visible").limit(1);
+      if (data?.[0]) setTermsVisible(data[0].setting_value !== "false");
+    })();
+  }, []);
 
   useEffect(() => {
     if (!ref) return;
@@ -168,15 +176,17 @@ export default function Register() {
           Already have an account? <Link to="/MemberLogin" className="text-orange-400 hover:underline">Login here</Link>
         </p>
 
-        <a href="https://forms.gle/bMLvWgG2KGfYXzBz8" target="_blank" rel="noopener noreferrer" className="block">
-          <button
-            type="button"
-            className="w-full h-[52px] rounded-xl text-base font-medium shadow-lg hover:brightness-105 transition"
-            style={{ background: GOLD_GRADIENT, color: "#4a3410" }}
-          >
-            Membership Terms &amp; Conditions
-          </button>
-        </a>
+        {termsVisible && (
+          <a href="https://forms.gle/bMLvWgG2KGfYXzBz8" target="_blank" rel="noopener noreferrer" className="block">
+            <button
+              type="button"
+              className="w-full h-[52px] rounded-xl text-base font-medium shadow-lg hover:brightness-105 transition"
+              style={{ background: GOLD_GRADIENT, color: "#4a3410" }}
+            >
+              Membership Terms &amp; Conditions
+            </button>
+          </a>
+        )}
       </form>
     </AuthShell>
   );

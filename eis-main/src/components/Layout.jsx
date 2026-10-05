@@ -7,6 +7,7 @@ import { clearMemberSession, getSessionMemberId } from "../lib/auth";
 import { supabase } from "../lib/supabase";
 import { MaintenanceBanner } from "./MaintenanceBanner";
 import { GCashButton } from "./GCashButton";
+import RiceFieldBackground from "./RiceFieldBackground";
 
 const LOGO_URL = "https://media.base44.com/images/public/6ac1daab80dea63a77ad8fa1/66582b089_Firefly.png";
 
@@ -78,14 +79,8 @@ export default function Layout({ children, currentPageName }) {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-orange-50/30">
-      {/* Soft blurred pastel background blobs */}
-      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-        <div className="absolute top-[8%] left-[18%] w-[480px] h-[480px] rounded-full blur-3xl" style={{ background: "rgba(244,114,182,0.22)" }} />
-        <div className="absolute top-[40%] right-[8%] w-[520px] h-[520px] rounded-full blur-3xl" style={{ background: "rgba(250,204,21,0.20)" }} />
-        <div className="absolute bottom-[6%] left-[40%] w-[460px] h-[460px] rounded-full blur-3xl" style={{ background: "rgba(96,165,250,0.22)" }} />
-        <div className="absolute top-[55%] left-[10%] w-[360px] h-[360px] rounded-full blur-3xl" style={{ background: "rgba(167,139,250,0.18)" }} />
-      </div>
+    <div className="relative min-h-screen overflow-hidden">
+      <RiceFieldBackground />
       {/* Mobile header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white/70 backdrop-blur-xl border-b border-orange-200 z-50 px-4 flex items-center justify-between">
         <div className="flex items-center gap-3">

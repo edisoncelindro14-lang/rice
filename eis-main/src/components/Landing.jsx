@@ -12,7 +12,8 @@ const STATS = [
 ];
 
 const LOGO_URL = "https://media.base44.com/images/public/6ac1daab80dea63a77ad8fa1/66582b089_Firefly.png";
-const BG_URL = "https://media.base44.com/images/public/6a757d467583dc056bb9db29/acb40a8f7_pngtree-d-render-of-extruded-abstract-background-with-futuristic-black-and-gold-image_3711336.jpg";
+const POSTER_URL = "https://media.base44.com/images/public/6ac1daab80dea63a77ad8fa1/bc22b8f15_LOA-EdisonNoconCelindro3.png";
+const BG_URL = "https://media.base44.com/images/public/6ac1daab80dea63a77ad8fa1/af9b954eb_rice-field-farm-landscape-beautiful-sunny-day-in-rice-fields-with-blue-sky-and-mountains-free-photo.jpg";
 
 export default function Landing() {
   return (
@@ -56,16 +57,17 @@ export default function Landing() {
         >
           <div className="flex flex-col items-center mb-6">
             <img src={LOGO_URL} alt="ProductPrime Community" className="w-56 sm:w-72 mb-4 drop-shadow-2xl object-contain" />
+            <img src={POSTER_URL} alt="Kumikita Ka Ba sa Bigas na Binibili Mo?" className="w-full max-w-sm mx-auto mb-4 rounded-2xl drop-shadow-2xl object-cover" />
             <div className="bg-amber-500/10 border border-amber-400/40 rounded-2xl px-6 py-4 max-w-3xl text-center">
-              <p className="text-amber-300 font-bold text-lg sm:text-2xl md:text-3xl leading-snug tracking-wide drop-shadow-lg">MATTHEW 6:33</p>
+              <p className="text-amber-300 font-bold text-lg sm:text-2xl md:text-3xl leading-snug tracking-wide drop-shadow-lg">Pagod ka na ba gumastos sa bigas?</p>
               <p className="text-amber-100 font-semibold italic text-base sm:text-xl md:text-2xl leading-relaxed mt-1">
-                "But seek ye first the kingdom of God, and his righteousness; and all these things shall be added unto you."
+                Tara na! Mag-ProductPrime! Dito ikaw naman ang kikita bilang Customer sa simpleng paraan lang.
               </p>
             </div>
           </div>
           <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold leading-tight mb-6">
-            Build Your
-            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">ProductPrime Empire</span>
+            "No Membership Fee !"
+            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">Bibili ka lang ng bigas na dati na natin ginagawa at i-share sa iba ang ProductPrime</span>
           </h1>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/Register" className="w-full sm:w-auto">

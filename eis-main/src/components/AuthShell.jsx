@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
-import TechBackground from "./TechBackground";
+import RiceFieldBackground from "./RiceFieldBackground";
 
 const LOGO_URL = "https://media.base44.com/images/public/6ac1daab80dea63a77ad8fa1/66582b089_Firefly.png";
 
@@ -14,7 +14,7 @@ export const GOLD_GRADIENT =
 export default function AuthShell({ title, backTo, children }) {
   return (
     <div className="min-h-screen relative flex items-center justify-center p-6 overflow-hidden">
-      <TechBackground />
+      <RiceFieldBackground dark />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}

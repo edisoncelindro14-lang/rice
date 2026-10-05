@@ -10,7 +10,7 @@ import AuthInput from "./AuthInput";
 export default function Login() {
   const nav = useNavigate();
   const [form, setForm] = useState({ username: "", password: "" });
-  const [showPwd, setShowPwd] = useState(true);
+  const [showPwd, setShowPwd] = useState(false);
   const [busy, setBusy] = useState(false);
 
   async function submit(e) {
@@ -49,6 +49,8 @@ export default function Login() {
           label="Username"
           required
           icon={User}
+          name="username"
+          autoComplete="username"
           value={form.username}
           onChange={e => setForm({ ...form, username: e.target.value })}
           placeholder="Enter your username"
@@ -58,6 +60,8 @@ export default function Login() {
           required
           icon={Lock}
           type={showPwd ? "text" : "password"}
+          name="password"
+          autoComplete="current-password"
           value={form.password}
           onChange={e => setForm({ ...form, password: e.target.value })}
           placeholder="Enter your password"

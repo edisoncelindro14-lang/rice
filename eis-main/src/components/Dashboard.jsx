@@ -179,9 +179,11 @@ export default function Dashboard() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
       {/* Top action buttons */}
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-6 flex justify-end gap-2 sm:gap-3">
-        <a href="https://forms.gle/bMLvWgG2KGfYXzBz8" target="_blank" rel="noopener noreferrer" className={`${termsVisible ? "" : "hidden"} inline-flex items-center justify-center gap-1 bg-green-500 hover:bg-green-600 text-white font-bold px-4 py-2 rounded-xl text-xs sm:text-sm h-auto whitespace-nowrap shadow-sm transition-colors`}>
-          <FileText className="w-4 h-4 mr-1" /> Membership Terms & Conditions
-        </a>
+        {termsVisible && (
+          <a href="https://forms.gle/bMLvWgG2KGfYXzBz8" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-1 bg-green-500 hover:bg-green-600 text-white font-bold px-4 py-2 rounded-xl text-xs sm:text-sm h-auto whitespace-nowrap shadow-sm transition-colors">
+            <FileText className="w-4 h-4 mr-1" /> Membership Terms & Conditions
+          </a>
+        )}
       </motion.div>
 
       {/* Welcome header */}

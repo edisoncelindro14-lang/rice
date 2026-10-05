@@ -1,13 +1,12 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Store as StoreIcon, Ticket, Calendar, Copy, Key, X, Search } from "lucide-react";
+import { Store as StoreIcon, Ticket, Calendar, Copy, Search } from "lucide-react";
 import toast from "react-hot-toast";
 import { useTable, useCurrentMember } from "../lib/useData";
-import { supabase } from "../lib/supabase";
-import { formatDate, maintenanceStatus } from "../lib/helpers";
+import { formatDate } from "../lib/helpers";
 import { storeQuotaSummary, generateStoreCodes } from "../lib/storeQuota";
-import { redeemCodeForMember } from "../lib/redeem";
 import StoreAvailableCodes from "./StoreAvailableCodes";
+import SearchableDropdown from "./SearchableDropdown";
 import { Button, Input, Label, Badge } from "./ui";
 
 export default function Store() {
@@ -19,10 +18,6 @@ export default function Store() {
   const [count, setCount] = useState("1");
   const [username, setUsername] = useState("");
   const [busy, setBusy] = useState(false);
-  const [redeemModal, setRedeemModal] = useState(null);
-  const [redeemCodeInput, setRedeemCodeInput] = useState("");
-  const [redeemBusy, setRedeemBusy] = useState(false);
-  const [redeemUsername, setRedeemUsername] = useState("");
   const [phonebookVersion, setPhonebookVersion] = useState(0);
   const [genSearch, setGenSearch] = useState("");
 
@@ -52,42 +47,6 @@ export default function Store() {
       setPhonebookVersion(v => v + 1);
     } catch { toast.error("Failed to generate codes"); }
     setBusy(false);
-  }
-
-  function openRedeemModal() {
-    const target = redeemUsername.trim().replace(/^@/, "");
-    if (!target) { toast.error("Select a username"); return; }
-    const member = members.find(m => m.username === target);
-    if (!member) { toast.error("Username not found"); return; }
-    const status = maintenanceStatus(member, codes);
-    if (status.isGreen && status.secondsLeft > 0) {
-      const h = Math.floor(status.secondsLeft / 3600);
-      const m = Math.floor((status.secondsLeft % 3600) / 60);
-      toast.error(`Cannot redeem — maintenance cycle still active (${h}h ${m}m remaining)`);
-      return;
-    }
-    setRedeemModal(member);
-    setRedeemCodeInput("");
-  }
-
-  async function handleRedeemForMember() {
-    if (!redeemModal || !redeemCodeInput.trim()) { toast.error("Enter a code"); return; }
-    setRedeemBusy(true);
-    try {
-      const member = redeemModal;
-      const { data: found, error } = await supabase
-        .from("maintenance_codes").select("*").ilike("code", redeemCodeInput.replace(/[%_\\]/g, c => `\\${c}`)).eq("is_used", false).limit(1);
-      if (error || !found?.length) { toast.error("Invalid or already used code"); setRedeemBusy(false); return; }
-      const result = await redeemCodeForMember(found[0], member, members, codes);
-      toast.success(result.message);
-      setRedeemModal(null);
-      setRedeemCodeInput("");
-      setRedeemUsername("");
-      refetchCodes();
-      refetchHistory();
-      setPhonebookVersion(v => v + 1);
-    } catch (err) { toast.error(err.message || "Failed to redeem code"); }
-    setRedeemBusy(false);
   }
 
   return (
@@ -143,8 +102,7 @@ export default function Store() {
           </div>
           <div>
             <Label>Designate to username (optional)</Label>
-            <Input list="store-usernames" value={username} onChange={e => setUsername(e.target.value)} placeholder="Leave blank for unassigned" />
-            <datalist id="store-usernames">{usernames.map(u => <option key={u} value={u} />)}</datalist>
+            <SearchableDropdown value={username} onChange={setUsername} options={usernames} placeholder="Leave blank for unassigned" />
           </div>
           <Button onClick={generate} disabled={busy || q.remaining < 1} className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white h-10">{busy ? "Generating..." : "Generate"}</Button>
         </div>
@@ -160,19 +118,6 @@ export default function Store() {
         refetchHistory={refetchHistory}
         onRedeemDone={() => setPhonebookVersion(v => v + 1)}
       />
-
-      {/* Redeem code for a member */}
-      <div className="bg-white rounded-3xl shadow-lg border border-gray-100 p-6 mb-6">
-        <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-4"><Key className="w-5 h-5 text-teal-500" /> Redeem Code for Member</h2>
-        <div className="grid sm:grid-cols-[1fr_auto] gap-3 items-end">
-          <div>
-            <Label>Select member username</Label>
-            <Input list="store-redeem-usernames" value={redeemUsername} onChange={e => setRedeemUsername(e.target.value)} placeholder="Search username..." />
-            <datalist id="store-redeem-usernames">{usernames.map(u => <option key={u} value={u} />)}</datalist>
-          </div>
-          <Button onClick={openRedeemModal} className="bg-teal-500 hover:bg-teal-600 text-white h-10"><Key className="w-4 h-4" /> Redeem</Button>
-        </div>
-      </div>
 
       {/* Generated codes */}
       <div className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
@@ -204,30 +149,6 @@ export default function Store() {
         </div>
       </div>
 
-      {/* Redeem Code Modal */}
-      {redeemModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => { setRedeemModal(null); setRedeemCodeInput(""); setRedeemUsername(""); }}>
-          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full" onClick={e => e.stopPropagation()}>
-            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2"><Key className="w-5 h-5 text-teal-600" /> Redeem Code — {redeemModal.username}</h2>
-              <button onClick={() => { setRedeemModal(null); setRedeemCodeInput(""); setRedeemUsername(""); }} className="p-1 rounded-lg hover:bg-gray-100"><X className="w-5 h-5 text-gray-400" /></button>
-            </div>
-            <div className="p-6 space-y-4">
-              <div className="bg-teal-50 border border-teal-200 rounded-xl p-4">
-                <p className="text-sm text-teal-800">Enter a maintenance code to redeem on behalf of this member. Upline bonuses will be distributed automatically.</p>
-              </div>
-              <div>
-                <Label>Maintenance Code</Label>
-                <Input value={redeemCodeInput} onChange={e => setRedeemCodeInput(e.target.value)} placeholder="e.g. MAINT-XXXXXX" className="font-mono" />
-              </div>
-            </div>
-            <div className="p-6 border-t border-gray-100 flex gap-3">
-              <Button onClick={() => { setRedeemModal(null); setRedeemCodeInput(""); setRedeemUsername(""); }} variant="outline" className="flex-1">Cancel</Button>
-              <Button onClick={handleRedeemForMember} disabled={redeemBusy} className="flex-1 bg-teal-500 hover:bg-teal-600 text-white">{redeemBusy ? "Redeeming..." : "Redeem Code"}</Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
