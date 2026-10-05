@@ -16,7 +16,7 @@ export function adImages(ad) {
 export default function AdBanner() {
   const { data: settings = [], refetch } = useTable("system_settings");
   useEffect(() => {
-    const i = setInterval(refetch, 5000);
+    const i = setInterval(() => { if (!document.hidden) refetch(); }, 60000);
     return () => clearInterval(i);
   }, [refetch]);
 
