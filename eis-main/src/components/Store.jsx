@@ -36,7 +36,8 @@ export default function Store() {
     const target = username.trim().replace(/^@/, "");
     if (n < 1) { toast.error("Enter a valid number of codes"); return; }
     if (n > q.remaining) { toast.error(`You can only generate ${q.remaining} more code(s)`); return; }
-    if (target && !usernames.includes(target)) { toast.error("Username not found"); return; }
+    if (!target) { toast.error("Select a username to designate the code to"); return; }
+    if (!usernames.includes(target)) { toast.error("Username not found"); return; }
     setBusy(true);
     try {
       await generateStoreCodes(currentMember.id, n, target);
@@ -101,8 +102,8 @@ export default function Store() {
             <Input type="number" min="1" max={q.remaining} value={count} onChange={e => setCount(e.target.value)} />
           </div>
           <div>
-            <Label>Designate to username (optional)</Label>
-            <SearchableDropdown value={username} onChange={setUsername} options={usernames} placeholder="Leave blank for unassigned" />
+            <Label>Designate to username</Label>
+            <SearchableDropdown value={username} onChange={setUsername} options={usernames} placeholder="Select a username" />
           </div>
           <Button onClick={generate} disabled={busy || q.remaining < 1} className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white h-10">{busy ? "Generating..." : "Generate"}</Button>
         </div>

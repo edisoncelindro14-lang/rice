@@ -1307,7 +1307,7 @@ export default function Admin() {
       {/* Store Tab */}
       {tab === "store" && (
         <AdminStoreTab approvedMembers={approvedMembers} members={members} codes={codes} quotas={storeQuotas}
-          currentMemberId={currentMemberId} setRole={setRole} refetchQuotas={refetchQuotas} />
+          currentMemberId={currentMemberId} setRole={setRole} refetchQuotas={refetchQuotas} refetchCodes={refetchCodes} />
       )}
 
 
