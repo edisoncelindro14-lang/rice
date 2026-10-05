@@ -91,5 +91,7 @@ export const TRANSACTION_TYPES = {
 };
 
 export function generateReferralCode() {
-  return Math.random().toString(36).substring(2, 8).toUpperCase();
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const bytes = crypto.getRandomValues(new Uint8Array(8));
+  return Array.from(bytes, b => chars[b % chars.length]).join("");
 }

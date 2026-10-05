@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Wallet, ArrowRight, KeyRound, ChevronDown, ChevronUp, Ticket, Clock, Share2, Check, FileText, Users, ShoppingBag } from "lucide-react";
+import { Wallet, ArrowRight, KeyRound, ChevronDown, ChevronUp, Ticket, Clock, Share2, Copy, Check, FileText, Users, ShoppingBag } from "lucide-react";
 import toast from "react-hot-toast";
 import { useTable, useCurrentMember, createRecord } from "../lib/useData";
 import { supabase } from "../lib/supabase";
@@ -367,8 +367,9 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center gap-2">
             <div className="flex-1 bg-white/15 rounded-xl px-4 py-3 border border-white/30 text-sm text-white truncate">{referralLink}</div>
-            <Button onClick={copyReferral} className="bg-white text-blue-700 hover:bg-blue-50 px-4 py-3 h-auto rounded-xl">
-              {copied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
+            <Button onClick={copyReferral} className="!bg-white !text-blue-700 hover:!bg-blue-50 px-4 py-3 h-auto rounded-xl">
+              {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+              <span className="ml-2 text-sm font-semibold">{copied ? "Copied!" : "Copy"}</span>
             </Button>
           </div>
         </motion.div>

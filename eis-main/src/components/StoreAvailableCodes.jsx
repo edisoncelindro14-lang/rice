@@ -123,7 +123,7 @@ export default function StoreAvailableCodes({ storeId, members, codes, refetchCo
                       disabled={isLocked || busyId === c.id}
                       className={isLocked
                         ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                        : "bg-gray-600 hover:bg-gray-700 text-white"}
+                        : "!bg-blue-600 hover:!bg-blue-700 !text-white"}
                       onClick={() => handleRedeem(c)}
                     >
                       {busyId === c.id ? "Redeeming…" : "Redeem"}

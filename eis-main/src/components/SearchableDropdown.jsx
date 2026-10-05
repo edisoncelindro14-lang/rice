@@ -77,7 +77,10 @@ export default function SearchableDropdown({ value, onChange, options = [], plac
                   key={opt}
                   type="button"
                   onClick={() => select(opt)}
-                  className={`w-full text-left px-4 py-2.5 text-sm hover:bg-amber-50 truncate ${opt === value ? "bg-amber-50 text-amber-700 font-medium" : "text-gray-700"}`}
+                  className={`w-full text-left px-4 py-2.5 text-sm hover:bg-amber-50 truncate ${
+                    query.trim() && opt.toLowerCase() === query.trim().toLowerCase()
+                      ? "text-red-600 font-bold"
+                      : opt === value ? "bg-amber-50 text-amber-700 font-medium" : "text-gray-700"}`}
                 >
                   {opt}
                 </button>
