@@ -26,7 +26,15 @@ export async function generateStoreCodes(storeId, count, assignedUsername) {
       generated_by_store_id: storeId,
     });
   }
-  const { error } = await supabase.from("maintenance_codes").insert(records);
+  let { error } = await supabase.from("maintenance_codes").insert(records);
+  if (error?.code === "23505") {
+    // Extremely rare code collision: regenerate once
+    records.forEach(r => {
+      const base = "MAINT-" + generateReferralCode();
+      r.code = assignedUsername ? `${base}-@${assignedUsername.toUpperCase()}` : base;
+    });
+    ({ error } = await supabase.from("maintenance_codes").insert(records));
+  }
   if (error) throw error;
 
   // Auto-add the designated username to the store's storebook if not already there

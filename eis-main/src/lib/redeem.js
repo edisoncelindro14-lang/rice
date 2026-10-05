@@ -8,26 +8,26 @@ export async function redeemCode(codeRecord, currentMember, allMembers, allCodes
   }
 
   // Mark code as used
-  await supabase
+  const writes = [supabase
     .from("maintenance_codes")
     .update({
       is_used: true,
       used_by_member_id: currentMember.id,
       used_at: new Date().toISOString(),
     })
-    .eq("id", codeRecord.id);
+    .eq("id", codeRecord.id)];
 
   // Record transaction for the user
-  await supabase.from("transactions").insert({
+  writes.push(supabase.from("transactions").insert({
     member_id: currentMember.id,
     type: "maintenance_code",
     amount: 0,
     description: `Redeemed maintenance code: ${codeRecord.code}`,
     status: "completed",
-  });
+  }));
 
   // Record in code_redemption_history (for both store and user)
-  await supabase.from("code_redemption_history").insert({
+  writes.push(supabase.from("code_redemption_history").insert({
     code_id: codeRecord.id,
     code: codeRecord.code,
     redeemed_by_member_id: currentMember.id,
@@ -35,11 +35,14 @@ export async function redeemCode(codeRecord, currentMember, allMembers, allCodes
     store_member_id: codeRecord.generated_by_store_id || null,
     redeemed_at: new Date().toISOString(),
     status: "completed",
-  });
+  }));
 
   // Fetch fresh data so upline maintenance status is accurate
-  const { data: freshMembers } = await supabase.from("members").select("*");
-  const { data: freshCodes } = await supabase.from("maintenance_codes").select("*");
+  await Promise.all(writes);
+  const [{ data: freshMembers }, { data: freshCodes }] = await Promise.all([
+    supabase.from("members").select("*"),
+    supabase.from("maintenance_codes").select("*"),
+  ]);
 
   const freshMember = (freshMembers || allMembers).find(m => m.id === currentMember.id);
   if (freshMember && freshMember.status !== "approved") {
@@ -56,24 +59,24 @@ export async function redeemCodeForMember(codeRecord, member, allMembers, allCod
     throw new Error(`This code is assigned to @${codeRecord.assigned_username}`);
   }
 
-  await supabase
+  const writes = [supabase
     .from("maintenance_codes")
     .update({
       is_used: true,
       used_by_member_id: member.id,
       used_at: new Date().toISOString(),
     })
-    .eq("id", codeRecord.id);
+    .eq("id", codeRecord.id)];
 
-  await supabase.from("transactions").insert({
+  writes.push(supabase.from("transactions").insert({
     member_id: member.id,
     type: "maintenance_code",
     amount: 0,
     description: `Redeemed maintenance code: ${codeRecord.code}`,
     status: "completed",
-  });
+  }));
 
-  await supabase.from("code_redemption_history").insert({
+  writes.push(supabase.from("code_redemption_history").insert({
     code_id: codeRecord.id,
     code: codeRecord.code,
     redeemed_by_member_id: member.id,
@@ -81,10 +84,13 @@ export async function redeemCodeForMember(codeRecord, member, allMembers, allCod
     store_member_id: codeRecord.generated_by_store_id || null,
     redeemed_at: new Date().toISOString(),
     status: "completed",
-  });
+  }));
 
-  const { data: freshMembers } = await supabase.from("members").select("*");
-  const { data: freshCodes } = await supabase.from("maintenance_codes").select("*");
+  await Promise.all(writes);
+  const [{ data: freshMembers }, { data: freshCodes }] = await Promise.all([
+    supabase.from("members").select("*"),
+    supabase.from("maintenance_codes").select("*"),
+  ]);
   const allM = freshMembers || allMembers;
   const allC = freshCodes || allCodes;
 
@@ -104,6 +110,7 @@ async function distributeUplineBonuses(member, allMembers, allCodes, codeRecord)
     return status.isGreen;
   };
 
+  const bonusWrites = [];
   let current = member;
   for (let level = 1; level <= MAX_BONUS_LEVEL; level++) {
     const upline = allMembers.find(m => m.id === current.referrer_id);
@@ -111,7 +118,7 @@ async function distributeUplineBonuses(member, allMembers, allCodes, codeRecord)
     if (canEarn(upline)) {
       const bonus = LEVEL_CONFIG.find(l => l.level === level)?.bonus_amount || 0;
       if (bonus > 0) {
-        await supabase.from("transactions").insert({
+        bonusWrites.push(supabase.from("transactions").insert({
           member_id: upline.id,
           type: "referral_bonus",
           amount: bonus,
@@ -119,9 +126,10 @@ async function distributeUplineBonuses(member, allMembers, allCodes, codeRecord)
           description: `Level ${level} bonus from ${member.username}`,
           status: "completed",
           from_member_id: member.id,
-        });
+        }));
       }
     }
     current = upline;
   }
+  await Promise.all(bonusWrites);
 }
