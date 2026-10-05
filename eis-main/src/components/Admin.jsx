@@ -17,6 +17,7 @@ import { Button, Input, Label, Badge } from "./ui";
 import Genealogy from "./Genealogy";
 import MonitoringView from "./MonitoringView";
 import AdminStoreTab from "./AdminStoreTab";
+import AdminTransactionHistory from "./AdminTransactionHistory";
 
 export default function Admin() {
   const [tab, setTab] = useState("members");
@@ -874,44 +875,7 @@ export default function Admin() {
       )}
 
       {/* Transaction History Tab */}
-      {tab === "history" && (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between gap-4">
-            <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2"><FileText className="w-5 h-5 text-amber-500" /> All User Transaction History</h2>
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <Input value={txSearch} onChange={e => setTxSearch(e.target.value)} placeholder="Search by member or type..." className="pl-10" />
-            </div>
-          </div>
-          <div className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead><tr className="border-b border-gray-100">
-                  {["Member", "Type", "Amount", "Description", "Status", "Date"].map(h => <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase whitespace-nowrap">{h}</th>)}
-                </tr></thead>
-                <tbody>
-                  {filteredTransactions.length === 0 ? (
-                    <tr><td colSpan="6" className="text-center py-12 text-gray-400">No transactions found</td></tr>
-                  ) : filteredTransactions.slice(0, 200).map(t => {
-                    const member = members.find(m => m.id === t.member_id);
-                    const isWithdrawal = t.type === "withdrawal";
-                    return (
-                      <tr key={t.id} className="border-b border-gray-50 hover:bg-gray-50">
-                        <td className="px-4 py-3 text-sm font-medium text-gray-900 whitespace-nowrap">{member?.full_name || "—"} <span className="text-gray-400 text-xs">@{member?.username || ""}</span></td>
-                        <td className="px-4 py-3"><Badge className="bg-gray-100 text-gray-600 capitalize">{t.type?.replace(/_/g, " ")}</Badge></td>
-                        <td className={`px-4 py-3 text-sm font-bold whitespace-nowrap ${isWithdrawal ? "text-red-600" : "text-emerald-600"}`}>{isWithdrawal ? "" : "+"}{money(Math.abs(t.amount || 0))}</td>
-                        <td className="px-4 py-3 text-sm text-gray-600">{t.description || "—"}</td>
-                        <td className="px-4 py-3"><Badge className={t.status === "completed" ? "bg-green-100 text-green-700" : t.status === "pending" ? "bg-yellow-100 text-yellow-700" : "bg-red-100 text-red-700"}>{t.status}</Badge></td>
-                        <td className="px-4 py-3 text-sm text-gray-400 whitespace-nowrap">{formatDate(t.created_date || t.created_at, "MMM d, yyyy")}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
+      {tab === "history" && <AdminTransactionHistory members={members} transactions={transactions} />}
 
       {/* Product Conversion Tab */}
       {tab === "product_conversion" && (
