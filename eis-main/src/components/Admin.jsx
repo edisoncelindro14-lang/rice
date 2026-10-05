@@ -17,6 +17,7 @@ import { Button, Input, Label, Badge } from "./ui";
 import Genealogy from "./Genealogy";
 import MonitoringView from "./MonitoringView";
 import AdminStoreTab from "./AdminStoreTab";
+import AdminAdsTab from "./AdminAdsTab";
 
 export default function Admin() {
   const [tab, setTab] = useState("members");
@@ -145,6 +146,7 @@ export default function Admin() {
     ...(canManageTabs ? [{ id: "roles", label: "Roles", icon: UserCog, active: "from-fuchsia-500 to-pink-600", inactive: "bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200 hover:bg-fuchsia-100" }] : []),
     ...(tabVisibility.subadmin ? [{ id: "subadmins", label: "Sub-Admins", icon: Shield, active: "from-emerald-500 to-green-600", inactive: "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100" }] : []),
     { id: "store", label: "Store", icon: Store, active: "from-teal-500 to-cyan-600", inactive: "bg-teal-50 text-teal-700 border-teal-200 hover:bg-teal-100" },
+    { id: "ads", label: "Ads", icon: ImageIcon, active: "from-orange-500 to-red-600", inactive: "bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100" },
     { id: "settings", label: "Settings", icon: Settings, active: "from-slate-500 to-gray-600", inactive: "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100" },
     { id: "profile", label: "My Profile", icon: User, active: "from-violet-500 to-indigo-600", inactive: "bg-violet-50 text-violet-700 border-violet-200 hover:bg-violet-100" },
   ];
@@ -1345,6 +1347,8 @@ export default function Admin() {
         <AdminStoreTab approvedMembers={approvedMembers} members={members} codes={codes} quotas={storeQuotas}
           currentMemberId={currentMemberId} setRole={setRole} refetchQuotas={refetchQuotas} />
       )}
+
+      {tab === "ads" && <AdminAdsTab />}
 
       {/* Settings Tab */}
       {tab === "settings" && (
