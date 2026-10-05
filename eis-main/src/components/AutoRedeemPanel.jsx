@@ -5,8 +5,7 @@ import { redeemCode } from "../lib/redeem";
 import { formatTime } from "../lib/helpers";
 import { Button } from "./ui";
 
-// Same as the "Unlocks in" countdown on a disabled Redeem button: 12h cycle minus the 2h unlock window = 10h
-const CYCLE_MS = 10 * 3600 * 1000;
+const CYCLE_MS = 12 * 3600 * 1000;
 
 const pad = n => String(n).padStart(2, "0");
 const toTimeInput = ms => `${pad(new Date(ms).getHours())}:${pad(new Date(ms).getMinutes())}`;
@@ -21,7 +20,7 @@ function nextOccurrence(hhmm) {
 }
 
 // Auto-redeem: redeems one available code at the chosen start time, then one
-// every 10 hours after the previous redeem, until no codes are left.
+// every 12 hours after the previous redeem, until no codes are left.
 export default function AutoRedeemPanel({ pending, member, members, codes, onDone }) {
   const storeKey = `auto_redeem_${member.id}`;
   const [cfg, setCfg] = useState(() => {
@@ -81,7 +80,7 @@ export default function AutoRedeemPanel({ pending, member, members, codes, onDon
         <h2 className="text-lg font-bold text-gray-900">Auto-Redeem</h2>
       </div>
       <p className="text-sm text-gray-500 mb-4">
-        Redeems your available codes automatically, one every 10 hours (when the Redeem button unlocks) starting at the time you set. Keep the app open for it to run.
+        Redeems your available codes automatically, one every 12 hours starting at the time you set. Keep the app open for it to run.
       </p>
       {cfg.enabled ? (
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -94,7 +93,7 @@ export default function AutoRedeemPanel({ pending, member, members, codes, onDon
       ) : (
         <div className="flex flex-wrap items-end gap-3">
           <label className="text-sm text-gray-600">
-            <span className="block mb-1">Start time (first 10-hour countdown)</span>
+            <span className="block mb-1">Start time (first 12-hour countdown)</span>
             <input
               type="time"
               value={startInput}
