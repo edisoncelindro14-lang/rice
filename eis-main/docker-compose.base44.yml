@@ -42,10 +42,20 @@ services:
       - PGRST_DB_SCHEMA=public
       - PGRST_SERVER_PORT=3000
 
+  storage:
+    image: node:22-alpine
+    working_dir: /app
+    volumes:
+      - ./scripts/local-storage.cjs:/app/local-storage.cjs:ro
+      - storage_data:/data
+    command: ["node", "local-storage.cjs"]
+    restart: on-failure
+
   proxy:
     image: nginx:alpine
     depends_on:
       - api
+      - storage
     ports:
       - "8000:8000"
     volumes:
@@ -74,3 +84,4 @@ services:
 
 volumes:
   db_data:
+  storage_data:

@@ -24,19 +24,25 @@ export default function AdBanner() {
   const images = adImages(ad);
   const count = images.length;
   const [idx, setIdx] = useState(0);
-  useEffect(() => {
-    if (count < 2) return;
-    const t = setInterval(() => setIdx(i => (i + 1) % count), 4000);
-    return () => clearInterval(t);
-  }, [count]);
-  if (!ad || (!ad.announcement && count === 0)) return null;
   const active = idx % Math.max(count, 1);
+  const next = () => setIdx(i => (i + 1) % count);
+  const isVideo = images[active]?.type === "video";
+  // Images advance on a timer; videos advance when they finish.
+  useEffect(() => {
+    if (count < 2 || isVideo) return;
+    const t = setTimeout(next, 4000);
+    return () => clearTimeout(t);
+  }, [count, active, isVideo]);
+  if (!ad || (!ad.announcement && count === 0)) return null;
 
   return (
     <div className="mb-6 bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
       {count > 0 && (
         <div className="relative w-full aspect-[16/9] bg-gray-100">
-          {images.map((im, i) => (
+          {images.map((im, i) => im.type === "video" ? (
+            i === active && <video key={i} src={im.src} autoPlay muted playsInline controls loop={count < 2} onEnded={next} onError={next}
+              className="absolute inset-0 w-full h-full object-contain bg-black" />
+          ) : (
             <img key={i} src={im.src} alt="Promotion" className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${i === active ? "opacity-100" : "opacity-0"}`}
               style={{ objectPosition: `${im.x ?? 50}% ${im.y ?? 50}%` }} />
           ))}
