@@ -57,7 +57,7 @@ export default function Landing() {
         >
           <div className="flex flex-col items-center mb-6">
             <img src={LOGO_URL} alt="ProductPrime Community" className="w-56 sm:w-72 mb-4 drop-shadow-2xl object-contain" />
-            <img src={POSTER_URL} alt="Kumikita Ka Ba sa Bigas na Binibili Mo?" className="w-56 sm:w-72 mb-4 rounded-2xl drop-shadow-2xl object-cover" />
+            <img src={POSTER_URL} alt="Kumikita Ka Ba sa Bigas na Binibili Mo?" className="w-full max-w-sm mx-auto mb-4 rounded-2xl drop-shadow-2xl object-cover" />
             <div className="bg-amber-500/10 border border-amber-400/40 rounded-2xl px-6 py-4 max-w-3xl text-center">
               <p className="text-amber-300 font-bold text-lg sm:text-2xl md:text-3xl leading-snug tracking-wide drop-shadow-lg">Pagod ka na ba gumastos sa bigas?</p>
               <p className="text-amber-100 font-semibold italic text-base sm:text-xl md:text-2xl leading-relaxed mt-1">
