@@ -69,9 +69,21 @@ export default function Register() {
         return;
       }
       let referrerId = null;
+      let referrer = null;
+      let autoPlace = false;
       if (ref) {
-        const { data: referrer } = await supabase.from("members").select("id").eq("referral_code", ref).limit(1);
-        if (referrer?.[0]) referrerId = referrer[0].id;
+        const { data: refRows } = await supabase.from("members").select("id,tree_level,direct_downlines_count").eq("referral_code", ref).limit(1);
+        referrer = refRows?.[0] || null;
+        if (referrer) {
+          referrerId = referrer.id;
+          // Place directly under the referrer while they have fewer than 8 direct downlines; otherwise lobby
+          const { count } = await supabase
+            .from("members")
+            .select("id", { count: "exact", head: true })
+            .eq("status", "approved")
+            .or(`placement_id.eq.${referrerId},and(placement_id.is.null,referrer_id.eq.${referrerId})`);
+          autoPlace = (count ?? 8) < 8;
+        }
       }
       const { data: newMember, error } = await supabase
         .from("members")
@@ -81,13 +93,17 @@ export default function Register() {
           full_name: form.username,
           referral_code: generateReferralCode(),
           referrer_id: referrerId,
-          status: referrerId ? "pending" : "approved",
+          status: referrerId && !autoPlace ? "pending" : "approved",
           role: "member",
-          tree_level: 0,
+          tree_level: autoPlace ? (referrer.tree_level || 0) + 1 : 0,
+          ...(autoPlace ? { placement_id: referrerId, approved_date: new Date().toISOString() } : {}),
         })
         .select()
         .single();
       if (error) throw error;
+      if (autoPlace) {
+        await supabase.from("members").update({ direct_downlines_count: (referrer.direct_downlines_count || 0) + 1 }).eq("id", referrerId);
+      }
       saveMemberSession(newMember.id);
       toast.success(`Welcome, ${newMember.full_name}!`);
       nav("/Dashboard");
