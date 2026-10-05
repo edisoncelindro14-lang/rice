@@ -5,13 +5,22 @@ import { supabase } from "../lib/supabase";
 import { formatDate } from "../lib/helpers";
 import { storeQuotaSummary } from "../lib/storeQuota";
 import { Button, Input, Label, Badge } from "./ui";
+import SearchableDropdown from "./SearchableDropdown";
 
-function StoreFilter({ value, onChange, stores }) {
+const storeLabel = s => `@${s.username} — ${s.full_name}`;
+
+// Searchable store picker; value/onChange work with store member ids ("" = none)
+function StoreFilter({ value, onChange, stores, placeholder = "All stores", className = "w-full sm:w-72" }) {
+  const selected = stores.find(s => s.id === value);
   return (
-    <select value={value} onChange={e => onChange(e.target.value)} className="h-10 rounded-md border border-gray-200 px-3 text-sm w-full sm:w-72">
-      <option value="">All stores</option>
-      {stores.map(s => <option key={s.id} value={s.id}>@{s.username} — {s.full_name}</option>)}
-    </select>
+    <div className={className}>
+      <SearchableDropdown
+        value={selected ? storeLabel(selected) : ""}
+        onChange={label => onChange(stores.find(s => storeLabel(s) === label)?.id || "")}
+        options={stores.map(storeLabel)}
+        placeholder={placeholder}
+      />
+    </div>
   );
 }
 
@@ -94,10 +103,7 @@ export default function AdminStoreTab({ approvedMembers, members, codes, quotas,
           <div className="grid sm:grid-cols-[1fr_160px_auto] gap-3 items-end">
             <div>
               <Label>Store username</Label>
-              <select value={storeId} onChange={e => setStoreId(e.target.value)} className="w-full h-10 rounded-md border border-gray-200 px-3 text-sm">
-                <option value="">Select store...</option>
-                {storeMembers.map(s => <option key={s.id} value={s.id}>@{s.username} — {s.full_name}</option>)}
-              </select>
+              <StoreFilter value={storeId} onChange={setStoreId} stores={storeMembers} placeholder="Select store..." className="w-full" />
             </div>
             <div>
               <Label>Number of codes</Label>
