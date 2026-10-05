@@ -7,9 +7,16 @@ import { Button } from "./ui";
 
 const CYCLE_MS = 12 * 3600 * 1000;
 
-function toLocalInput(ms) {
-  const d = new Date(ms - new Date(ms).getTimezoneOffset() * 60000);
-  return d.toISOString().slice(0, 16);
+const pad = n => String(n).padStart(2, "0");
+const toTimeInput = ms => `${pad(new Date(ms).getHours())}:${pad(new Date(ms).getMinutes())}`;
+
+// "HH:MM" -> next occurrence of that time (today, or tomorrow if already passed)
+function nextOccurrence(hhmm) {
+  const [h, m] = hhmm.split(":").map(Number);
+  const d = new Date();
+  d.setHours(h, m, 0, 0);
+  if (d.getTime() < Date.now() - 60000) d.setDate(d.getDate() + 1);
+  return d.getTime();
 }
 
 // Auto-redeem: redeems one available code at the chosen start time, then one
@@ -20,7 +27,7 @@ export default function AutoRedeemPanel({ pending, member, members, codes, onDon
     try { return JSON.parse(localStorage.getItem(storeKey)) || { enabled: false, nextAt: null }; }
     catch { return { enabled: false, nextAt: null }; }
   });
-  const [startInput, setStartInput] = useState(() => toLocalInput(Date.now()));
+  const [startInput, setStartInput] = useState(() => toTimeInput(Date.now()));
   const [now, setNow] = useState(Date.now());
   const busy = useRef(false);
   const latest = useRef({});
@@ -58,8 +65,8 @@ export default function AutoRedeemPanel({ pending, member, members, codes, onDon
 
   function enable() {
     if (pending.length === 0) return toast.error("You need available codes to enable auto-redeem.");
-    const start = new Date(startInput).getTime();
-    if (!start) return toast.error("Set a valid start time.");
+    if (!startInput) return toast.error("Set a valid start time.");
+    const start = nextOccurrence(startInput);
     save({ enabled: true, nextAt: start });
     toast.success("Auto-redeem enabled.");
   }
@@ -88,7 +95,7 @@ export default function AutoRedeemPanel({ pending, member, members, codes, onDon
           <label className="text-sm text-gray-600">
             <span className="block mb-1">Start time (first 12-hour countdown)</span>
             <input
-              type="datetime-local"
+              type="time"
               value={startInput}
               onChange={e => setStartInput(e.target.value)}
               className="border border-gray-200 rounded-lg px-3 py-2 text-gray-900"
