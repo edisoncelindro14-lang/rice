@@ -8,6 +8,8 @@ import { supabase } from "../lib/supabase";
 import { redeemCode } from "../lib/redeem";
 import { formatDate, formatTime, maintenanceStatus } from "../lib/helpers";
 import { Button, Badge } from "./ui";
+import AutoRedeemPanel from "./AutoRedeemPanel";
+import WeeklyRedeemMonitor from "./WeeklyRedeemMonitor";
 
 const REDEEM_UNLOCK_THRESHOLD = 7200; // redeem enabled when 12h maintenance countdown has ≤2h left
 
@@ -116,6 +118,19 @@ export default function CodeCabinet() {
           <p className="text-sm text-gray-500">Redeemed</p>
         </div>
       </div>
+
+      <AutoRedeemPanel
+        pending={pending}
+        member={currentMember}
+        members={members}
+        codes={codes}
+        onDone={() => { refetchCodes(); refetchHistory(); }}
+      />
+
+      <WeeklyRedeemMonitor
+        title="My Weekly Redeemed Codes"
+        rows={[{ username: currentMember.username, usedAts: codes.filter(c => c.is_used && c.used_by_member_id === currentMember.id && c.used_at).map(c => c.used_at) }]}
+      />
 
       {/* Pending codes */}
       <div className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden mb-6">

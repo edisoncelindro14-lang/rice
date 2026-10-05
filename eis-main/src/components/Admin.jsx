@@ -40,6 +40,7 @@ export default function Admin() {
   const [gcash, setGcash] = useState({ gcash_number: "", gcash_name: "" });
   const [minAmount, setMinAmount] = useState("300");
   const [savingMin, setSavingMin] = useState(false);
+  const [autoRedeemTime, setAutoRedeemTime] = useState("");
   const [txSearch, setTxSearch] = useState("");
   const [tabVisibility, setTabVisibility] = useState({ monitoring: true, subadmin: true, terms: true, complan: true, product_conversion: true });
   const [monitorMember, setMonitorMember] = useState(null);
@@ -73,6 +74,7 @@ export default function Admin() {
     });
     const minSetting = settings.find(s => s.setting_key === "withdrawal_minimum_amount");
     if (minSetting) setMinAmount(minSetting.setting_value);
+    setAutoRedeemTime(map.auto_redeem_start_time || "");
   }, [settings]);
 
   // Live countdown — re-render every second so maintenance timers tick down
@@ -489,6 +491,16 @@ export default function Admin() {
       toast.success(`Minimum withdrawal set to ₱${val.toLocaleString()}`);
     } catch { toast.error("Failed to update"); }
     setSavingMin(false);
+  }
+
+  async function saveAutoRedeemTime() {
+    if (!autoRedeemTime) { toast.error("Set a start time"); return; }
+    try {
+      const existing = settings.find(s => s.setting_key === "auto_redeem_start_time");
+      if (existing) await updateRecord("system_settings", existing.id, { setting_value: autoRedeemTime });
+      else await createRecord("system_settings", { setting_key: "auto_redeem_start_time", setting_value: autoRedeemTime });
+      toast.success("Auto-redeem start time saved");
+    } catch { toast.error("Failed to update"); }
   }
 
   async function toggleTab(key) {
@@ -1319,6 +1331,14 @@ export default function Admin() {
             <div className="flex gap-3 items-end">
               <div className="flex-1"><Label>Amount (₱)</Label><Input type="number" value={minAmount} onChange={e => setMinAmount(e.target.value)} /></div>
               <Button onClick={saveMinAmount} disabled={savingMin} className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white">Save</Button>
+            </div>
+          </div>
+          <div className="bg-white rounded-3xl shadow-lg border border-gray-100 p-6">
+            <h2 className="text-lg font-bold text-gray-900 mb-1 flex items-center gap-2"><Clock className="w-5 h-5 text-amber-500" /> Auto-Redeem Start Time</h2>
+            <p className="text-sm text-gray-500 mb-4">Members' auto-redeem for store-generated codes starts at this time of day.</p>
+            <div className="flex gap-3 items-end">
+              <div className="flex-1"><Label>Start time</Label><Input type="time" value={autoRedeemTime} onChange={e => setAutoRedeemTime(e.target.value)} /></div>
+              <Button onClick={saveAutoRedeemTime} className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white">Save</Button>
             </div>
           </div>
           <div className="bg-white rounded-3xl shadow-lg border border-gray-100 p-6">
