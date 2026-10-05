@@ -108,7 +108,8 @@ export default function AdminAdsTab() {
     if (!cur || !window.confirm("Delete this file permanently? It will also be removed from Cloudinary.")) return;
     setBusy(true);
     try {
-      if (cur.public_id) await deleteFromCloudinary(cur);
+      // A file already gone from Cloudinary must not block removing it from the ad.
+      if (cur.public_id) await deleteFromCloudinary(cur).catch(e => toast.error(`Cloudinary: ${e.message}`));
       const rest = images.filter((_, i) => i !== sel);
       const strip = ad => JSON.stringify({ ...ad, images: adImages(ad).filter(im => im.src !== cur.src), image: undefined, x: undefined, y: undefined });
       setImages(rest); setSel(0);
