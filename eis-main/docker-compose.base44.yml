@@ -26,7 +26,22 @@ services:
     command:
       - |
         psql -h db -U postgres -f /migrations/000_local_init.sql &&
+        psql -h db -U postgres -f /migrations/008_redemption_history.sql &&
+        psql -h db -U postgres -f /migrations/010_auto_redeem_server.sql &&
         echo "Migrations complete"
+
+  # Local stand-in for pg_cron: fires the server-side auto-redeem every 30s (it only acts once a day at the admin time)
+  scheduler:
+    image: postgres:16-alpine
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+    environment:
+      - PGPASSWORD=postgres
+    entrypoint: ["sh", "-c"]
+    command:
+      - while true; do psql -h db -U postgres -qAt -c "select public.run_auto_redeem()" >/dev/null 2>&1; sleep 30; done
+    restart: on-failure
 
   api:
     image: postgrest/postgrest:v12.2.3

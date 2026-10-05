@@ -1,103 +1,42 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Zap, Clock } from "lucide-react";
-import toast from "react-hot-toast";
 import { useTable } from "../lib/useData";
-import { redeemCode } from "../lib/redeem";
-import { formatTime, maintenanceStatus, MAX_BONUS_LEVEL } from "../lib/helpers";
-import { supabase } from "../lib/supabase";
+import { formatTime } from "../lib/helpers";
 
-const CYCLE_MS = 24 * 3600 * 1000; // once a day
-const pad = n => String(n).padStart(2, "0");
-const toTimeInput = ms => `${pad(new Date(ms).getHours())}:${pad(new Date(ms).getMinutes())}`;
+// Auto-redeem runs on the server (database job, see supabase/migrations/010_auto_redeem_server.sql):
+// once a day at the admin-set time, whether or not the app is open. This panel only shows its schedule;
+// the code lists refresh automatically, so redemptions appear in real time.
+const DEFAULT_TZ = "Asia/Manila";
 
-// "HH:MM" -> next occurrence of that time (today, or tomorrow if already passed)
-function nextOccurrence(hhmm) {
+// Seconds until the next run of "HH:MM" in the server timezone
+function secondsUntilNext(hhmm, tz, lastRun) {
+  const parts = Object.fromEntries(new Intl.DateTimeFormat("en-CA", { timeZone: tz, hourCycle: "h23",
+    year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" })
+    .formatToParts(new Date()).map(p => [p.type, p.value]));
+  const nowSec = (+parts.hour) * 3600 + (+parts.minute) * 60 + (+parts.second);
   const [h, m] = hhmm.split(":").map(Number);
-  const d = new Date();
-  d.setHours(h, m, 0, 0);
-  if (d.getTime() < Date.now() - 60000) d.setDate(d.getDate() + 1);
-  return d.getTime();
+  const target = h * 3600 + m * 60;
+  const today = `${parts.year}-${parts.month}-${parts.day}`;
+  const ranToday = lastRun === today;
+  return target > nowSec && !ranToday ? target - nowSec : target + 86400 - nowSec;
 }
 
-// Everyone redeems at the same admin-set time, but commissions only pay uplines whose own code is
-// already active (5-level ComPlan). So before redeeming, wait until the up-to-5 uplines above who
-// still have a code to redeem have gone first. Safety timeout so nobody waits forever (e.g. offline upline).
-const POLL_MS = 2000;
-const MAX_WAIT_MS = 30000;
-async function waitForUplines(member) {
-  const started = Date.now();
-  while (Date.now() - started < MAX_WAIT_MS) {
-    const [{ data: ms }, { data: cs }] = await Promise.all([
-      supabase.from("members").select("*"),
-      supabase.from("maintenance_codes").select("*"),
-    ]);
-    if (!ms || !cs) return;
-    let cur = member, blocked = false;
-    for (let level = 1; level <= MAX_BONUS_LEVEL; level++) {
-      const up = ms.find(m => m.id === cur?.referrer_id);
-      if (!up) break;
-      const willRedeem = cs.some(c => !c.is_used && c.assigned_username === up.username);
-      if (up.status === "approved" && willRedeem && !maintenanceStatus(up, cs).isGreen) { blocked = true; break; }
-      cur = up;
-    }
-    if (!blocked) return;
-    await new Promise(res => setTimeout(res, POLL_MS));
-  }
-}
-
-// Auto-redeem: redeems one available code at the chosen time of day, then again every
-// day at the same clock time (e.g. 9:00 AM every day), until no codes are left.
-export default function AutoRedeemPanel({ pending, member, members, codes, onDone }) {
-  const storeKey = `auto_redeem_${member.id}`;
-  const [cfg, setCfg] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(storeKey)) || { enabled: false, nextAt: null }; }
-    catch { return { enabled: false, nextAt: null }; }
-  });
+export default function AutoRedeemPanel({ pending }) {
   const { data: settings = [] } = useTable("system_settings");
-  const adminTime = settings.find(x => x.setting_key === "auto_redeem_start_time")?.setting_value || "";
-    const [now, setNow] = useState(Date.now());
-  const busy = useRef(false);
-  const latest = useRef({});
-  latest.current = { pending, members, codes, cfg };
-
-  function save(next) {
-    setCfg(next);
-    localStorage.setItem(storeKey, JSON.stringify(next));
-  }
-
+  const get = k => settings.find(x => x.setting_key === k)?.setting_value || "";
+  const adminTime = get("auto_redeem_start_time");
+  const tz = get("auto_redeem_timezone") || DEFAULT_TZ;
+  const lastRun = get("auto_redeem_last_run");
+  const [, setNow] = useState(0);
   useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 1000);
+    const t = setInterval(() => setNow(n => n + 1), 1000);
     return () => clearInterval(t);
   }, []);
 
-  // No buttons: whenever codes are available and the admin has set a start time, schedule starts automatically
-  useEffect(() => {
-    const { pending, members, codes, cfg } = latest.current;
-    if (busy.current) return;
-    if (pending.length === 0) {
-      if (cfg.enabled) save({ enabled: false, nextAt: null });
-      return;
-    }
-    if (!adminTime) return;
-    if (!cfg.enabled) { save({ enabled: true, nextAt: nextOccurrence(adminTime) }); return; }
-    if (Date.now() < cfg.nextAt) return;
-    busy.current = true;
-    const oldest = [...pending].sort((a, b) => new Date(a.created_at) - new Date(b.created_at))[0];
-    waitForUplines(member)
-      .then(() => redeemCode(oldest, member, members, codes))
-      .then(r => toast.success(`Auto-redeem: ${r.message}`))
-      .catch(err => toast.error(`Auto-redeem failed: ${err.message || "error"}`))
-      .finally(() => {
-        // keep the same clock time: advance the schedule in 24h steps, never drifting
-        let next = latest.current.cfg.nextAt + CYCLE_MS;
-        while (next <= Date.now()) next += CYCLE_MS;
-        save({ enabled: true, nextAt: next });
-        onDone?.();
-        busy.current = false;
-      });
-  }, [now, adminTime]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [hh, mm] = (adminTime || "0:0").split(":").map(Number);
+  const label = new Date(2000, 0, 1, hh, mm).toLocaleTimeString([], { hour: "numeric", minute: "2-digit", hour12: true });
 
-  const secondsToNext = cfg.enabled ? Math.max(0, Math.ceil((cfg.nextAt - now) / 1000)) : 0;
+  const secondsToNext = adminTime ? secondsUntilNext(adminTime, tz, lastRun) : 0;
 
   return (
     <div className="bg-white rounded-2xl shadow border border-gray-100 p-5 mb-6">
@@ -106,17 +45,15 @@ export default function AutoRedeemPanel({ pending, member, members, codes, onDon
         <h2 className="text-lg font-bold text-gray-900">Auto-Redeem</h2>
       </div>
       <p className="text-sm text-gray-500 mb-4">
-        Redeems one available code automatically at the start time set by the admin, then again once a day at the same time. Keep the app open for it to run.
+        Redeems one available code for you automatically once a day at the start time set by the admin. It runs on the server, so you don't need to keep the app open.
       </p>
-      {cfg.enabled ? (
+      {adminTime ? (
         <p className="text-sm font-semibold text-emerald-700 flex items-center gap-1">
           <Clock className="w-4 h-4" />
-          {secondsToNext > 0 ? `Next code at ${new Date(cfg.nextAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit", hour12: true })} (in ${formatTime(secondsToNext)})` : "Redeeming…"} · {pending.length} code{pending.length === 1 ? "" : "s"} queued
+          Next code at {label} ({tz}) (in {formatTime(secondsToNext)}) · {pending.length} code{pending.length === 1 ? "" : "s"} queued
         </p>
       ) : (
-        <p className="text-xs text-gray-400">
-          {pending.length === 0 ? "No available codes." : "Waiting for the admin to set the auto-redeem start time."}
-        </p>
+        <p className="text-xs text-gray-400">Waiting for the admin to set the auto-redeem start time.</p>
       )}
     </div>
   );
