@@ -8,6 +8,7 @@ import { supabase } from "../lib/supabase";
 import { MaintenanceBanner } from "./MaintenanceBanner";
 import { GCashButton } from "./GCashButton";
 import RiceFieldBackground from "./RiceFieldBackground";
+import { clearDataCache } from "../lib/useData";
 
 const LOGO_URL = "https://media.base44.com/images/public/6ac1daab80dea63a77ad8fa1/66582b089_Firefly.png";
 
@@ -71,6 +72,7 @@ export default function Layout({ children, currentPageName }) {
 
   function handleLogout() {
     clearMemberSession();
+    clearDataCache();
     nav("/");
   }
 
