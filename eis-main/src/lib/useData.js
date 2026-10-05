@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "./supabase";
 import { getSessionMemberId } from "./auth";
 
@@ -7,10 +7,11 @@ export function useTable(tableName, options = {}) {
   const { filter = null, order = null, limit = null, enabled = true } = options;
   const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(enabled);
+  const loadedOnce = useRef(false);
 
   const fetchData = useCallback(async () => {
     if (!enabled) return;
-    setIsLoading(true);
+    if (!loadedOnce.current) setIsLoading(true); // background refetches stay silent
     try {
       let query = supabase.from(tableName).select("*");
       if (filter) {
@@ -31,7 +32,7 @@ export function useTable(tableName, options = {}) {
       }
       if (limit) query = query.limit(limit);
       const { data: result, error } = await query;
-      if (!error) setData(result || []);
+      if (!error) { setData(result || []); loadedOnce.current = true; }
     } catch (e) {
       console.error(`Error fetching ${tableName}:`, e);
     }

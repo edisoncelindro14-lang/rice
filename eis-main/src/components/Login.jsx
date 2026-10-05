@@ -10,7 +10,7 @@ import AuthInput from "./AuthInput";
 export default function Login() {
   const nav = useNavigate();
   const [form, setForm] = useState({ username: "", password: "" });
-  const [showPwd, setShowPwd] = useState(false);
+  const [showPwd, setShowPwd] = useState(true);
   const [busy, setBusy] = useState(false);
 
   async function submit(e) {

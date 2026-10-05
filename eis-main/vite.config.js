@@ -3,8 +3,29 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { VitePWA } from "vite-plugin-pwa";
 
+// Dev-only: serve api/cloudinary-delete.js (a Vercel function in production) from Vite.
+function devApi() {
+  return {
+    name: "dev-api",
+    configureServer(server) {
+      server.middlewares.use("/api/cloudinary-delete", async (req, res) => {
+        let raw = "";
+        for await (const c of req) raw += c;
+        try { req.body = raw ? JSON.parse(raw) : {}; } catch { req.body = {}; }
+        res.status = code => { res.statusCode = code; return res; };
+        res.json = obj => { res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify(obj)); };
+        try {
+          const { default: handler } = await server.ssrLoadModule("/api/cloudinary-delete.js");
+          await handler(req, res);
+        } catch (e) { res.status(500).json({ error: e.message }); }
+      });
+    },
+  };
+}
+
 export default defineConfig({
   plugins: [
+    devApi(),
     react(),
     tailwindcss(),
     VitePWA({

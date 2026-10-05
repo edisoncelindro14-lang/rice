@@ -71,7 +71,7 @@ export default function Layout({ children, currentPageName }) {
 
   function handleLogout() {
     clearMemberSession();
-    nav("/MemberLogin");
+    nav("/");
   }
 
   if (currentPageName === "Register" || currentPageName === "MemberLogin") {
