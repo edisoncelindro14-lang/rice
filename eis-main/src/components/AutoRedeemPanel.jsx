@@ -2,11 +2,6 @@ import React, { useEffect, useState } from "react";
 import { Zap, Clock } from "lucide-react";
 import { useTable } from "../lib/useData";
 
-// "7h 12m 30s" style countdown (not a clock reading)
-function formatCountdown(sec) {
-  const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
-  return `${h}h ${String(m).padStart(2, "0")}m ${String(s).padStart(2, "0")}s`;
-}
 
 // Auto-redeem runs on the server (database job, see supabase/migrations/010_auto_redeem_server.sql):
 // once a day at the admin-set time, whether or not the app is open. This panel only shows its schedule;
@@ -44,7 +39,6 @@ export default function AutoRedeemPanel({ pending }) {
   const secondsToNext = adminTime ? secondsUntilNext(adminTime, tz, lastRun) : 0;
   const tzName = tz === "Asia/Manila" ? "Philippine Standard Time" : tz;
   const nowLabel = new Intl.DateTimeFormat("en-US", { timeZone: tz, hour: "numeric", minute: "2-digit", second: "2-digit", hour12: true }).format(new Date());
-  const near = secondsToNext <= 3600;
   const day = secondsToNext <= 86400 && new Date(Date.now() + secondsToNext * 1000).toLocaleDateString("en-CA", { timeZone: tz }) === new Date().toLocaleDateString("en-CA", { timeZone: tz }) ? "Today" : "Tomorrow";
 
   return (
@@ -60,8 +54,7 @@ export default function AutoRedeemPanel({ pending }) {
       {adminTime ? (
         <p className="text-sm font-semibold text-emerald-700 flex items-center gap-1">
           <Clock className="w-4 h-4" />
-          Next code {day} at {label} ({tzName}) · in {formatCountdown(secondsToNext)} · {pending.length} code{pending.length === 1 ? "" : "s"} queued
-          <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${near ? "bg-amber-100 text-amber-700" : "bg-gray-100 text-gray-600"}`}>{near ? "Near" : "Far"}</span>
+          Next code {day} at {label} ({tzName}) · {pending.length} code{pending.length === 1 ? "" : "s"} queued
         </p>
       ) : (
         <p className="text-xs text-gray-400">Waiting for the admin to set the auto-redeem start time.</p>
