@@ -53,8 +53,13 @@ begin
     order by t.depth, m.created_at
   loop
     -- one auto-redeem per member per local day (a code that arrives after the start time is still picked up)
+    -- checks both maintenance_codes and code_redemption_history so a manual redeem
+    -- (by the user or by a store on their behalf) is never double-redeemed by auto-redeem
     if exists (select 1 from public.maintenance_codes where is_used and used_by_member_id = r.id
-               and (used_at at time zone tz)::date = local_now::date) then continue; end if;
+               and (used_at at time zone tz)::date = local_now::date)
+       or exists (select 1 from public.code_redemption_history where redeemed_by_member_id = r.id
+                  and status = 'completed'
+                  and (redeemed_at at time zone tz)::date = local_now::date) then continue; end if;
 
     select * into c from public.maintenance_codes
       where not is_used and assigned_username = r.username order by created_at limit 1 for update skip locked;
