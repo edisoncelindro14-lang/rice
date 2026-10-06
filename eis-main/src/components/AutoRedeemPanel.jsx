@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Zap, Clock } from "lucide-react";
 import { useTable } from "../lib/useData";
-import { formatTime } from "../lib/helpers";
+
 
 // Auto-redeem runs on the server (database job, see supabase/migrations/010_auto_redeem_server.sql):
 // once a day at the admin-set time, whether or not the app is open. This panel only shows its schedule;
@@ -34,9 +34,12 @@ export default function AutoRedeemPanel({ pending }) {
   }, []);
 
   const [hh, mm] = (adminTime || "0:0").split(":").map(Number);
-  const label = new Date(2000, 0, 1, hh, mm).toLocaleTimeString([], { hour: "numeric", minute: "2-digit", hour12: true });
+  const label = `${hh % 12 || 12}:${String(mm).padStart(2, "0")} ${hh >= 12 ? "PM" : "AM"}`;
 
   const secondsToNext = adminTime ? secondsUntilNext(adminTime, tz, lastRun) : 0;
+  const tzName = tz === "Asia/Manila" ? "Philippine Standard Time" : tz;
+  const nowLabel = new Intl.DateTimeFormat("en-US", { timeZone: tz, hour: "numeric", minute: "2-digit", second: "2-digit", hour12: true }).format(new Date());
+  const day = secondsToNext <= 86400 && new Date(Date.now() + secondsToNext * 1000).toLocaleDateString("en-CA", { timeZone: tz }) === new Date().toLocaleDateString("en-CA", { timeZone: tz }) ? "Today" : "Tomorrow";
 
   return (
     <div className="bg-white rounded-2xl shadow border border-gray-100 p-5 mb-6">
@@ -47,10 +50,11 @@ export default function AutoRedeemPanel({ pending }) {
       <p className="text-sm text-gray-500 mb-4">
         Redeems one available code for you automatically once a day at the start time set by the admin. It runs on the server, so you don't need to keep the app open.
       </p>
+      {adminTime && <p className="text-xs text-gray-500 mb-1">Current time: <span className="font-semibold">{nowLabel}</span> ({tzName})</p>}
       {adminTime ? (
         <p className="text-sm font-semibold text-emerald-700 flex items-center gap-1">
           <Clock className="w-4 h-4" />
-          Next code at {label} ({tz}) (in {formatTime(secondsToNext)}) · {pending.length} code{pending.length === 1 ? "" : "s"} queued
+          Next code {day} at {label} ({tzName}) · {pending.length} code{pending.length === 1 ? "" : "s"} queued
         </p>
       ) : (
         <p className="text-xs text-gray-400">Waiting for the admin to set the auto-redeem start time.</p>

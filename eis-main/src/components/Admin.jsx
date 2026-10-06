@@ -499,6 +499,16 @@ export default function Admin() {
       const existing = settings.find(s => s.setting_key === "auto_redeem_start_time");
       if (existing) await updateRecord("system_settings", existing.id, { setting_value: autoRedeemTime });
       else await createRecord("system_settings", { setting_key: "auto_redeem_start_time", setting_value: autoRedeemTime });
+      // Reset today's run so the new time takes effect: if it is still ahead today it will fire then,
+      // if it has already passed today it waits until tomorrow.
+      const tzSetting = settings.find(s => s.setting_key === "auto_redeem_timezone")?.setting_value || "Asia/Manila";
+      const p = Object.fromEntries(new Intl.DateTimeFormat("en-CA", { timeZone: tzSetting, hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }).formatToParts(new Date()).map(x => [x.type, x.value]));
+      const [th, tm] = autoRedeemTime.split(":").map(Number);
+      const passed = th * 60 + tm <= (+p.hour) * 60 + (+p.minute);
+      const lastRunValue = passed ? `${p.year}-${p.month}-${p.day}` : "";
+      const lastRun = settings.find(s => s.setting_key === "auto_redeem_last_run");
+      if (lastRun) await updateRecord("system_settings", lastRun.id, { setting_value: lastRunValue });
+      else if (passed) await createRecord("system_settings", { setting_key: "auto_redeem_last_run", setting_value: lastRunValue });
       toast.success("Auto-redeem start time saved");
     } catch { toast.error("Failed to update"); }
   }

@@ -11,7 +11,7 @@ const fmt = d => d.toLocaleDateString("en-US", { month: "short", day: "numeric" 
  * Monday–Sunday redeem monitor. `rows` = [{ username, usedAts: [timestamps of redeemed codes] }]
  * Each member needs at least WEEKLY_REDEEM_TARGET redeemed codes per calendar week.
  */
-export default function WeeklyRedeemMonitor({ rows, title = "Weekly Redeem Monitor" }) {
+export default function WeeklyRedeemMonitor({ rows, title = "Weekly Redeem Monitor", showFilter = true }) {
   const [offset, setOffset] = useState(0);
   const [filter, setFilter] = useState("");
   const [now, setNow] = useState(Date.now());
@@ -45,7 +45,7 @@ export default function WeeklyRedeemMonitor({ rows, title = "Weekly Redeem Monit
         </div>
       </div>
       <div className="px-6 py-3 border-b border-gray-100 grid sm:grid-cols-[1fr_auto] gap-3 items-center bg-gray-50/50">
-        <div className="max-w-sm"><SearchableDropdown value={filter} onChange={setFilter} options={rows.map(r => r.username).sort()} placeholder="Filter by username" /></div>
+        {showFilter ? <div className="max-w-sm"><SearchableDropdown value={filter} onChange={setFilter} options={rows.map(r => r.username).sort()} placeholder="Filter by username" /></div> : <div />}
         <div className="text-sm font-semibold text-violet-700">
           {offset === 0
             ? `⏱ Week ends in ${days > 0 ? `${days}d ` : ""}${formatTime(secondsLeft % 86400)}`

@@ -34,12 +34,12 @@ begin
   if local_now::time < start_t::time then return 0; end if;
 
   select setting_value into last_run from public.system_settings where setting_key = 'auto_redeem_last_run' limit 1;
-  if last_run = today then return 0; end if;
+  -- Record the day (for display only), then redeem. A missing last_run row must NOT skip the day,
+  -- otherwise the very first scheduled run (e.g. 8:30am) would be swallowed.
   if exists (select 1 from public.system_settings where setting_key = 'auto_redeem_last_run') then
     update public.system_settings set setting_value = today where setting_key = 'auto_redeem_last_run';
   else
     insert into public.system_settings (setting_key, setting_value) values ('auto_redeem_last_run', today);
-    return 0; -- first time the schedule is set: start tomorrow
   end if;
 
   -- Uplines first (shallowest referral depth), so each upline is already green when their downlines redeem
@@ -49,9 +49,13 @@ begin
       union all select m.id, t.depth + 1 from public.members m join t on m.referrer_id = t.id
     )
     select m.* from public.members m join t on t.id = m.id
-    where m.status = 'approved' and coalesce(m.role, 'member') not in ('admin', 'sub_admin')
+    where m.status = 'approved'
     order by t.depth, m.created_at
   loop
+    -- one auto-redeem per member per local day (a code that arrives after the start time is still picked up)
+    if exists (select 1 from public.maintenance_codes where is_used and used_by_member_id = r.id
+               and (used_at at time zone tz)::date = local_now::date) then continue; end if;
+
     select * into c from public.maintenance_codes
       where not is_used and assigned_username = r.username order by created_at limit 1 for update skip locked;
     if not found then continue; end if;
