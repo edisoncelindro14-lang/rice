@@ -50,7 +50,7 @@ begin
       union all select m.id, t.depth + 1 from public.members m join t on m.referrer_id = t.id
     )
     select m.* from public.members m join t on t.id = m.id
-    where m.status = 'approved' and coalesce(m.role, 'member') not in ('admin', 'sub_admin')
+    where m.status = 'approved'
     order by t.depth, m.created_at
   loop
     select * into c from public.maintenance_codes
