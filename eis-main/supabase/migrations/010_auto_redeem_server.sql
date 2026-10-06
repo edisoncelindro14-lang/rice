@@ -35,11 +35,12 @@ begin
 
   select setting_value into last_run from public.system_settings where setting_key = 'auto_redeem_last_run' limit 1;
   if last_run = today then return 0; end if;
+  -- Mark today as done (so it runs once), then redeem. A missing last_run row must NOT skip the day,
+  -- otherwise the very first scheduled run (e.g. 8:30am) would be swallowed.
   if exists (select 1 from public.system_settings where setting_key = 'auto_redeem_last_run') then
     update public.system_settings set setting_value = today where setting_key = 'auto_redeem_last_run';
   else
     insert into public.system_settings (setting_key, setting_value) values ('auto_redeem_last_run', today);
-    return 0; -- first time the schedule is set: start tomorrow
   end if;
 
   -- Uplines first (shallowest referral depth), so each upline is already green when their downlines redeem
