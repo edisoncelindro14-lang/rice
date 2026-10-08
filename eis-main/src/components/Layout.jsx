@@ -111,7 +111,7 @@ export default function Layout({ children, currentPageName }) {
             const active = currentPageName === item.path;
             return (
               <Link key={item.path} to={navPath(item.path)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${active ? "bg-orange-600 text-white shadow-md" : "text-white/90 hover:bg-white/20"}`}>
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${active ? "bg-amber-900 text-white shadow-md" : "text-white/90 hover:bg-white/20"}`}>
                 <Icon className="w-5 h-5" />
                 <span className="font-medium">{item.name}</span>
                 {active && <ChevronRight className="w-4 h-4 ml-auto" />}
@@ -156,7 +156,7 @@ export default function Layout({ children, currentPageName }) {
                   const active = currentPageName === item.path;
                   return (
                     <Link key={item.path} to={navPath(item.path)} onClick={() => setMobileOpen(false)}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${active ? "bg-orange-600 text-white shadow-md" : "text-white/90 hover:bg-white/20"}`}>
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${active ? "bg-amber-900 text-white shadow-md" : "text-white/90 hover:bg-white/20"}`}>
                       <Icon className="w-5 h-5" />
                       <span className="font-medium">{item.name}</span>
                     </Link>
