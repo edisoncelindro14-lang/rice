@@ -198,7 +198,7 @@ export default function Dashboard() {
       {/* Balance card + Maintenance code */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         {/* Balance card */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="lg:col-span-2 bg-gradient-to-br from-[#581c87] to-[#4c0519] rounded-3xl shadow-xl overflow-hidden">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="lg:col-span-2 bg-gradient-to-br from-[#581c87] to-[#4c0519] rounded-3xl shadow-xl overflow-hidden flex flex-col">
           <div className="p-8 bg-black/10">
             <div className="flex items-center gap-6 flex-wrap">
               <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center shrink-0">
@@ -296,6 +296,7 @@ export default function Dashboard() {
               )}
             </AnimatePresence>
           </div>
+          <div className="flex-1 bg-[#fdf5e6]"></div>
         </motion.div>
 
         {/* Maintenance code redemption */}
