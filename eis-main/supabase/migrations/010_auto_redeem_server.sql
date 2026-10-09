@@ -25,6 +25,11 @@ declare
 begin
   if not pg_try_advisory_xact_lock(884201) then return 0; end if;
 
+  -- If the admin has disabled auto-redeem, do nothing
+  if exists (select 1 from public.system_settings where setting_key = 'auto_redeem_enabled' and setting_value = 'false') then
+    return 0;
+  end if;
+
   select setting_value into start_t from public.system_settings where setting_key = 'auto_redeem_start_time' limit 1;
   if start_t is null or start_t = '' then return 0; end if;
   select setting_value into tz from public.system_settings where setting_key = 'auto_redeem_timezone' limit 1;
