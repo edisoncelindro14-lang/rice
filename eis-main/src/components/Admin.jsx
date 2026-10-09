@@ -19,6 +19,7 @@ import MonitoringView from "./MonitoringView";
 import AdminStoreTab from "./AdminStoreTab";
 import AdminTransactionHistory from "./AdminTransactionHistory";
 import MaintenanceOverrideModal from "./MaintenanceOverrideModal";
+import EditBalanceModal from "./EditBalanceModal";
 
 export default function Admin() {
   const [tab, setTab] = useState("members");
@@ -54,6 +55,7 @@ export default function Admin() {
   const [transferring, setTransferring] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [overrideModal, setOverrideModal] = useState(null);
+  const [balanceModal, setBalanceModal] = useState(null);
 
   const { data: members = [] } = useTable("members");
   const { data: codes = [], refetch: refetchCodes } = useTable("maintenance_codes");
@@ -662,7 +664,7 @@ export default function Admin() {
                     <button onClick={() => { setRedeemModal(m); setRedeemCode(""); }} className="p-2 bg-teal-100 text-teal-600 rounded-lg hover:bg-teal-200 transition-colors" title="Redeem Code"><Key className="w-4 h-4" /></button>
                     {(isSupAdmin || isOwner) && <button onClick={() => setOverrideModal(m)} className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors" title="Maintenance Override"><Clock className="w-4 h-4" /></button>}
 
-                    {isSupAdmin && <button onClick={() => setEditMember({ ...m })} className="p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition-colors" title="Edit Balance"><Wallet className="w-4 h-4" /></button>}
+                    {(isSupAdmin || isOwner) && <button onClick={() => setBalanceModal(m)} className="p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition-colors" title="Edit Balance"><Wallet className="w-4 h-4" /></button>}
                     {isExpired && getDirectDownlineCount(m.id) === 0 && (
                       <button onClick={() => setConfirmDelete({ type: "member", id: m.id, name: m.full_name || m.username })} className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors" title="Delete Account"><Trash2 className="w-4 h-4" /></button>
                     )}
@@ -1710,6 +1712,15 @@ export default function Admin() {
           member={overrideModal}
           codes={codes}
           onClose={() => setOverrideModal(null)}
+          onApplied={() => window.location.reload()}
+        />
+      )}
+
+      {balanceModal && (
+        <EditBalanceModal
+          member={balanceModal}
+          currentBalance={getMemberBalance(balanceModal.id)}
+          onClose={() => setBalanceModal(null)}
           onApplied={() => window.location.reload()}
         />
       )}
