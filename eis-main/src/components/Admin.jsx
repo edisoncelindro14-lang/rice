@@ -18,6 +18,8 @@ import Genealogy from "./Genealogy";
 import MonitoringView from "./MonitoringView";
 import AdminStoreTab from "./AdminStoreTab";
 import AdminTransactionHistory from "./AdminTransactionHistory";
+import MaintenanceOverrideModal from "./MaintenanceOverrideModal";
+import EditBalanceModal from "./EditBalanceModal";
 
 export default function Admin() {
   const [tab, setTab] = useState("members");
@@ -41,6 +43,7 @@ export default function Admin() {
   const [minAmount, setMinAmount] = useState("300");
   const [savingMin, setSavingMin] = useState(false);
   const [autoRedeemTime, setAutoRedeemTime] = useState("");
+  const [autoRedeemEnabled, setAutoRedeemEnabled] = useState(true);
   const [txSearch, setTxSearch] = useState("");
   const [tabVisibility, setTabVisibility] = useState({ monitoring: true, subadmin: true, terms: true, complan: true, product_conversion: true });
   const [monitorMember, setMonitorMember] = useState(null);
@@ -52,6 +55,8 @@ export default function Admin() {
   const [transferCodeCount, setTransferCodeCount] = useState("1");
   const [transferring, setTransferring] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [overrideModal, setOverrideModal] = useState(null);
+  const [balanceModal, setBalanceModal] = useState(null);
 
   const { data: members = [] } = useTable("members");
   const { data: codes = [], refetch: refetchCodes } = useTable("maintenance_codes");
@@ -75,6 +80,7 @@ export default function Admin() {
     const minSetting = settings.find(s => s.setting_key === "withdrawal_minimum_amount");
     if (minSetting) setMinAmount(minSetting.setting_value);
     setAutoRedeemTime(map.auto_redeem_start_time || "");
+    setAutoRedeemEnabled(map.auto_redeem_enabled !== "false");
   }, [settings]);
 
   // Live countdown — re-render every second so maintenance timers tick down
@@ -513,6 +519,17 @@ export default function Admin() {
     } catch { toast.error("Failed to update"); }
   }
 
+  async function toggleAutoRedeem() {
+    const newVal = !autoRedeemEnabled;
+    setAutoRedeemEnabled(newVal);
+    try {
+      const existing = settings.find(s => s.setting_key === "auto_redeem_enabled");
+      if (existing) await updateRecord("system_settings", existing.id, { setting_value: String(newVal) });
+      else await createRecord("system_settings", { setting_key: "auto_redeem_enabled", setting_value: String(newVal) });
+      toast.success(`Auto-redeem ${newVal ? "enabled" : "disabled"}`);
+    } catch { toast.error("Failed to update"); setAutoRedeemEnabled(!newVal); }
+  }
+
   async function toggleTab(key) {
     const settingKey = `tab_${key}_visible`;
     const newVal = !tabVisibility[key];
@@ -658,9 +675,9 @@ export default function Admin() {
                     <button onClick={() => setSponsorModal({ member: m, newSponsorId: "" })} className="p-2 bg-yellow-100 text-yellow-600 rounded-lg hover:bg-yellow-200 transition-colors" title="Change Sponsor"><GitBranch className="w-4 h-4" /></button>
                     <button onClick={() => setEditMember({ ...m })} className="p-2 bg-purple-100 text-purple-600 rounded-lg hover:bg-purple-200 transition-colors" title="Edit Member"><Pencil className="w-4 h-4" /></button>
                     <button onClick={() => { setRedeemModal(m); setRedeemCode(""); }} className="p-2 bg-teal-100 text-teal-600 rounded-lg hover:bg-teal-200 transition-colors" title="Redeem Code"><Key className="w-4 h-4" /></button>
-                    {isSupAdmin && <button onClick={() => setEditMember({ ...m })} className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors" title="Maintenance Override"><Clock className="w-4 h-4" /></button>}
+                    {(isSupAdmin || isOwner) && <button onClick={() => setOverrideModal(m)} className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors" title="Maintenance Override"><Clock className="w-4 h-4" /></button>}
 
-                    {isSupAdmin && <button onClick={() => setEditMember({ ...m })} className="p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition-colors" title="Edit Balance"><Wallet className="w-4 h-4" /></button>}
+                    {(isSupAdmin || isOwner) && <button onClick={() => setBalanceModal(m)} className="p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition-colors" title="Edit Balance"><Wallet className="w-4 h-4" /></button>}
                     {isExpired && getDirectDownlineCount(m.id) === 0 && (
                       <button onClick={() => setConfirmDelete({ type: "member", id: m.id, name: m.full_name || m.username })} className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors" title="Delete Account"><Trash2 className="w-4 h-4" /></button>
                     )}
@@ -1344,8 +1361,18 @@ export default function Admin() {
             </div>
           </div>
           <div className="bg-white rounded-3xl shadow-lg border border-gray-100 p-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-1 flex items-center gap-2"><Clock className="w-5 h-5 text-amber-500" /> Auto-Redeem Start Time</h2>
+            <h2 className="text-lg font-bold text-gray-900 mb-1 flex items-center gap-2"><Clock className="w-5 h-5 text-amber-500" /> Auto-Redeem</h2>
             <p className="text-sm text-gray-500 mb-4">Members' auto-redeem for store-generated codes starts at this time of day.</p>
+            <div className="flex items-center justify-between p-3 rounded-xl border border-gray-100 mb-4">
+              <div>
+                <span className="font-medium text-gray-700">Auto-Redeem Enabled</span>
+                <p className="text-xs text-gray-400">When off, the auto-redeem section is hidden from members' Code Cabinet.</p>
+              </div>
+              <button onClick={toggleAutoRedeem}
+                className={`relative w-12 h-6 rounded-full transition-colors ${autoRedeemEnabled ? "bg-green-500" : "bg-gray-300"}`}>
+                <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full transition-transform ${autoRedeemEnabled ? "translate-x-6" : "translate-x-0.5"}`} />
+              </button>
+            </div>
             <div className="flex gap-3 items-end">
               <div className="flex-1"><Label>Start time</Label><Input type="time" value={autoRedeemTime} onChange={e => setAutoRedeemTime(e.target.value)} /></div>
               <Button onClick={saveAutoRedeemTime} className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white">Save</Button>
@@ -1702,6 +1729,24 @@ export default function Admin() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {overrideModal && (
+        <MaintenanceOverrideModal
+          member={overrideModal}
+          codes={codes}
+          onClose={() => setOverrideModal(null)}
+          onApplied={() => window.location.reload()}
+        />
+      )}
+
+      {balanceModal && (
+        <EditBalanceModal
+          member={balanceModal}
+          currentBalance={getMemberBalance(balanceModal.id)}
+          onClose={() => setBalanceModal(null)}
+          onApplied={() => window.location.reload()}
+        />
+      )}
     </div>
   );
 }
