@@ -18,6 +18,7 @@ export default function CodeCabinet() {
   const { data: members = [] } = useTable("members");
   const { data: codes = [], refetch: refetchCodes } = useTable("maintenance_codes");
   const { data: redemptionHistory = [], refetch: refetchHistory } = useTable("code_redemption_history");
+  const { data: systemSettings = [] } = useTable("system_settings");
   const { currentMember } = useCurrentMember(members);
   const [redeemBusyId, setRedeemBusyId] = useState(null);
   const [now, setNow] = useState(Date.now());
@@ -119,6 +120,7 @@ export default function CodeCabinet() {
         </div>
       </div>
 
+      {systemSettings.find(s => s.setting_key === "auto_redeem_enabled")?.setting_value !== "false" && (
       <AutoRedeemPanel
         pending={pending}
         member={currentMember}
@@ -126,6 +128,7 @@ export default function CodeCabinet() {
         codes={codes}
         onDone={() => { refetchCodes(); refetchHistory(); }}
       />
+      )}
 
       <WeeklyRedeemMonitor
         title="My Weekly Redeemed Codes"
