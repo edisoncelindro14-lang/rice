@@ -13,7 +13,9 @@
 
     <!-- Open Graph / Social sharing preview -->
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://productprime.vercel.app/" />
+    <!-- og:url intentionally omitted: Facebook/Messenger canonicalizes shared URLs to this value,
+         which strips the /Register?ref=CODE path from referral links. Without it, the scraper
+         uses the actual shared URL instead. -->
     <meta property="og:title" content="ProductPrime" />
     <meta property="og:description" content="MLM genealogy and referral management platform" />
     <meta property="og:image" content="https://productprime.vercel.app/og-image.png" />
