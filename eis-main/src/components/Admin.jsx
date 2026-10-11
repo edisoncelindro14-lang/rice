@@ -14,6 +14,7 @@ import { getSessionMemberId } from "../lib/auth";
 import { money, formatDate, generateReferralCode, maintenanceStatus, formatTime, LEVEL_CONFIG, MAX_BONUS_LEVEL } from "../lib/helpers";
 import { distributePlacementCommissions } from "../lib/commissions";
 import { Button, Input, Label, Badge } from "./ui";
+import { Megaphone } from "lucide-react";
 import Genealogy from "./Genealogy";
 import MonitoringView from "./MonitoringView";
 import AdminStoreTab from "./AdminStoreTab";
@@ -46,6 +47,9 @@ export default function Admin() {
   const [autoRedeemEnabled, setAutoRedeemEnabled] = useState(true);
   const [txSearch, setTxSearch] = useState("");
   const [tabVisibility, setTabVisibility] = useState({ monitoring: true, subadmin: true, terms: true, complan: true, product_conversion: true });
+  const [announcementText, setAnnouncementText] = useState("");
+  const [announcementEnabled, setAnnouncementEnabled] = useState(false);
+  const [savingAnnouncement, setSavingAnnouncement] = useState(false);
   const [monitorMember, setMonitorMember] = useState(null);
   const [previewReceipt, setPreviewReceipt] = useState(null);
   const [signedUrls, setSignedUrls] = useState({});
@@ -81,6 +85,8 @@ export default function Admin() {
     if (minSetting) setMinAmount(minSetting.setting_value);
     setAutoRedeemTime(map.auto_redeem_start_time || "");
     setAutoRedeemEnabled(map.auto_redeem_enabled !== "false");
+    setAnnouncementText(map.announcement_text || "");
+    setAnnouncementEnabled(map.announcement_enabled === "true");
   }, [settings]);
 
   // Live countdown — re-render every second so maintenance timers tick down
@@ -154,6 +160,7 @@ export default function Admin() {
     ...(canManageTabs ? [{ id: "roles", label: "Roles", icon: UserCog, active: "from-fuchsia-500 to-pink-600", inactive: "bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200 hover:bg-fuchsia-100" }] : []),
     ...(tabVisibility.subadmin ? [{ id: "subadmins", label: "Sub-Admins", icon: Shield, active: "from-emerald-500 to-green-600", inactive: "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100" }] : []),
     { id: "store", label: "Store", icon: Store, active: "from-teal-500 to-cyan-600", inactive: "bg-teal-50 text-teal-700 border-teal-200 hover:bg-teal-100" },
+    { id: "announcement", label: "Announcement", icon: Megaphone, active: "from-amber-500 to-orange-600", inactive: "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100" },
     { id: "settings", label: "Settings", icon: Settings, active: "from-slate-500 to-gray-600", inactive: "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100" },
     { id: "profile", label: "My Profile", icon: User, active: "from-violet-500 to-indigo-600", inactive: "bg-violet-50 text-violet-700 border-violet-200 hover:bg-violet-100" },
   ];
@@ -528,6 +535,22 @@ export default function Admin() {
       else await createRecord("system_settings", { setting_key: "auto_redeem_enabled", setting_value: String(newVal) });
       toast.success(`Auto-redeem ${newVal ? "enabled" : "disabled"}`);
     } catch { toast.error("Failed to update"); setAutoRedeemEnabled(!newVal); }
+  }
+
+  async function saveAnnouncement() {
+    setSavingAnnouncement(true);
+    try {
+      const textExisting = settings.find(s => s.setting_key === "announcement_text");
+      if (textExisting) await updateRecord("system_settings", textExisting.id, { setting_value: announcementText });
+      else await createRecord("system_settings", { setting_key: "announcement_text", setting_value: announcementText });
+
+      const enaExisting = settings.find(s => s.setting_key === "announcement_enabled");
+      if (enaExisting) await updateRecord("system_settings", enaExisting.id, { setting_value: String(announcementEnabled) });
+      else await createRecord("system_settings", { setting_key: "announcement_enabled", setting_value: String(announcementEnabled) });
+
+      toast.success("Announcement saved");
+    } catch { toast.error("Failed to save announcement"); }
+    setSavingAnnouncement(false);
   }
 
   async function toggleTab(key) {
@@ -1349,6 +1372,42 @@ export default function Admin() {
           currentMemberId={currentMemberId} setRole={setRole} refetchQuotas={refetchQuotas} refetchCodes={refetchCodes} />
       )}
 
+      {/* Announcement Tab */}
+      {tab === "announcement" && (
+        <div className="space-y-6">
+          <div className="bg-white rounded-3xl shadow-lg border border-gray-100 p-6">
+            <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2"><Megaphone className="w-5 h-5 text-amber-500" /> Announcement</h2>
+            <p className="text-sm text-gray-500 mb-4">Write a text announcement that appears below the timer banner on every user dashboard. Toggle it on or off at any time.</p>
+            <div className="space-y-4">
+              <div>
+                <Label>Announcement Text</Label>
+                <textarea
+                  value={announcementText}
+                  onChange={e => setAnnouncementText(e.target.value)}
+                  rows={4}
+                  placeholder="Enter your announcement here..."
+                  className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 resize-none"
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <button
+                    type="button"
+                    onClick={() => setAnnouncementEnabled(v => !v)}
+                    className={`relative w-12 h-6 rounded-full transition-colors ${announcementEnabled ? "bg-green-500" : "bg-gray-300"}`}
+                  >
+                    <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform ${announcementEnabled ? "translate-x-6" : ""}`} />
+                  </button>
+                  <span className="text-sm font-medium text-gray-700">{announcementEnabled ? "Visible to users" : "Hidden from users"}</span>
+                </label>
+                <Button onClick={saveAnnouncement} disabled={savingAnnouncement} className="bg-gradient-to-r from-amber-500 to-orange-600 text-white">
+                  {savingAnnouncement ? "Saving..." : "Save Announcement"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Settings Tab */}
       {tab === "settings" && (
