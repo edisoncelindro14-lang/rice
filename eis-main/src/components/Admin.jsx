@@ -66,7 +66,7 @@ export default function Admin() {
   const { data: codes = [], refetch: refetchCodes } = useTable("maintenance_codes");
   const { data: withdrawals = [] } = useTable("conversion_requests");
   const { data: gcashInfo = [] } = useTable("gcash_info");
-  const { data: settings = [] } = useTable("system_settings");
+  const { data: settings = [], refetch: refetchSettings } = useTable("system_settings");
   const { data: transactions = [] } = useTable("transactions");
   const { data: receipts = [] } = useTable("gcash_receipts");
   const { data: storeQuotas = [], refetch: refetchQuotas } = useTable("store_code_quotas");
@@ -549,6 +549,7 @@ export default function Admin() {
       else await createRecord("system_settings", { setting_key: "announcement_enabled", setting_value: String(announcementEnabled) });
 
       toast.success("Announcement saved");
+      refetchSettings();
     } catch { toast.error("Failed to save announcement"); }
     setSavingAnnouncement(false);
   }
