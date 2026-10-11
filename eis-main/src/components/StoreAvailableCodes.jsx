@@ -78,7 +78,7 @@ export default function StoreAvailableCodes({ storeId, members, codes, refetchCo
 
       <div className="p-6">
         {/* Search by username */}
-        <div className="mb-4">
+        <div className="mb-4 max-w-sm">
           <SearchableDropdown
             value={selectedUser}
             onChange={setSelectedUser}

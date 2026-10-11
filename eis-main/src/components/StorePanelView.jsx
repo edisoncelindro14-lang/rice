@@ -123,7 +123,7 @@ export default function StorePanelView({ store }) {
       <div className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
         <div className="p-6 border-b border-gray-100">
           <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-3"><Ticket className="w-5 h-5 text-amber-500" /> My Generated Codes</h2>
-          <SearchableDropdown value={genSelectedUser} onChange={setGenSelectedUser} options={genUsernameOptions} placeholder="Filter by username" />
+          <div className="max-w-sm"><SearchableDropdown value={genSelectedUser} onChange={setGenSelectedUser} options={genUsernameOptions} placeholder="Filter by username" /></div>
         </div>
         <div className="overflow-auto max-h-[520px]">
           <table className="w-full">
