@@ -1,14 +1,15 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { Search, Copy, Clock, Ticket } from "lucide-react";
+import { Copy, Clock, Ticket } from "lucide-react";
 import toast from "react-hot-toast";
 import { maintenanceStatus, formatTime, formatDate } from "../lib/helpers";
 import { redeemCodeForMember } from "../lib/redeem";
-import { Button, Input } from "./ui";
+import { Button } from "./ui";
+import SearchableDropdown from "./SearchableDropdown";
 
 const REDEEM_UNLOCK_THRESHOLD = 0; // redeem enabled only when 12h maintenance cycle is fully expired
 
 export default function StoreAvailableCodes({ storeId, members, codes, refetchCodes, refetchHistory, onRedeemDone }) {
-  const [search, setSearch] = useState("");
+  const [selectedUser, setSelectedUser] = useState("");
   const [busyId, setBusyId] = useState(null);
   const [now, setNow] = useState(Date.now());
 
@@ -26,12 +27,17 @@ export default function StoreAvailableCodes({ storeId, members, codes, refetchCo
     [codes, storeId]
   );
 
-  // Filter by username search
+  // Unique usernames from available codes for the dropdown
+  const usernameOptions = useMemo(
+    () => [...new Set(availableCodes.map(c => c.assigned_username).filter(Boolean))],
+    [availableCodes]
+  );
+
+  // Filter by selected username
   const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return availableCodes;
-    return availableCodes.filter(c => c.assigned_username.toLowerCase().includes(q));
-  }, [availableCodes, search]);
+    if (!selectedUser) return availableCodes;
+    return availableCodes.filter(c => c.assigned_username === selectedUser);
+  }, [availableCodes, selectedUser]);
 
   async function handleRedeem(code) {
     const member = members.find(m => m.username === code.assigned_username);
@@ -72,13 +78,12 @@ export default function StoreAvailableCodes({ storeId, members, codes, refetchCo
 
       <div className="p-6">
         {/* Search by username */}
-        <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <Input
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Search by username…"
-            className="pl-10"
+        <div className="mb-4 max-w-sm">
+          <SearchableDropdown
+            value={selectedUser}
+            onChange={setSelectedUser}
+            options={usernameOptions}
+            placeholder="Filter by username"
           />
         </div>
 

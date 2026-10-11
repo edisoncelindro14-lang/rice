@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Ticket, Calendar, Copy, Search } from "lucide-react";
+import { Ticket, Calendar, Copy } from "lucide-react";
 import toast from "react-hot-toast";
 import { useTable } from "../lib/useData";
 import { formatDate } from "../lib/helpers";
@@ -18,16 +18,16 @@ export default function StorePanelView({ store }) {
   const [username, setUsername] = useState("");
   const [busy, setBusy] = useState(false);
   const [phonebookVersion, setPhonebookVersion] = useState(0);
-  const [genSearch, setGenSearch] = useState("");
+  const [genSelectedUser, setGenSelectedUser] = useState("");
 
   const q = storeQuotaSummary(store.id, quotas, codes);
   const isAdminRole = m => m.role === "admin" || m.role === "sub_admin";
   const adminNames = new Set(members.filter(isAdminRole).map(m => m.username));
   const usernames = members.filter(m => m.status === "approved" && !isAdminRole(m)).map(m => m.username);
   const hideAdminCodes = list => list.filter(c => !adminNames.has(c.assigned_username));
-  const genSearchQ = genSearch.trim().toLowerCase();
-  const filteredGeneratedCodes = genSearchQ
-    ? hideAdminCodes(q.generatedCodes).filter(c => (c.assigned_username || "").toLowerCase().includes(genSearchQ))
+  const genUsernameOptions = [...new Set(hideAdminCodes(q.generatedCodes).map(c => c.assigned_username).filter(Boolean))];
+  const filteredGeneratedCodes = genSelectedUser
+    ? hideAdminCodes(q.generatedCodes).filter(c => c.assigned_username === genSelectedUser)
     : hideAdminCodes(q.generatedCodes);
 
   // Per-user weekly monitor: every non-admin user this store designated codes to
@@ -123,10 +123,7 @@ export default function StorePanelView({ store }) {
       <div className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
         <div className="p-6 border-b border-gray-100">
           <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-3"><Ticket className="w-5 h-5 text-amber-500" /> My Generated Codes</h2>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <Input value={genSearch} onChange={e => setGenSearch(e.target.value)} placeholder="Search by username…" className="pl-10" />
-          </div>
+          <div className="max-w-sm"><SearchableDropdown value={genSelectedUser} onChange={setGenSelectedUser} options={genUsernameOptions} placeholder="Filter by username" /></div>
         </div>
         <div className="overflow-auto max-h-[520px]">
           <table className="w-full">

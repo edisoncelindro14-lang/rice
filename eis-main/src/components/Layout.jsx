@@ -6,6 +6,7 @@ import { useTable, useCurrentMember } from "../lib/useData";
 import { clearMemberSession, getSessionMemberId } from "../lib/auth";
 import { supabase } from "../lib/supabase";
 import { MaintenanceBanner } from "./MaintenanceBanner";
+import AnnouncementBanner from "./AnnouncementBanner";
 import { GCashButton } from "./GCashButton";
 import RiceFieldBackground from "./RiceFieldBackground";
 import { clearDataCache } from "../lib/useData";
@@ -181,6 +182,7 @@ export default function Layout({ children, currentPageName }) {
 
       <main className="lg:ml-64 pt-16 lg:pt-0 min-h-screen">
         <MaintenanceBanner />
+        <AnnouncementBanner />
         {children}
         <GCashButton />
       </main>
