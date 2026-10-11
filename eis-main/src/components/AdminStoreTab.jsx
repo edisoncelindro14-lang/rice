@@ -69,7 +69,7 @@ export default function AdminStoreTab({ approvedMembers, members, codes, quotas,
       toast.success(`${n} code(s) added to @${nameOf(storeId)}`);
       setAmount("50");
       refetchQuotas();
-      window.location.reload();
+      refetchCodes();
     } catch (err) {
       console.error("addQuota exception:", err);
       toast.error("Failed to add codes");
