@@ -8,6 +8,7 @@ import { supabase } from "../lib/supabase";
 import { redeemCode } from "../lib/redeem";
 import { money, formatDate, withdrawalCharge, LEVEL_CONFIG, MAX_BONUS_LEVEL, maintenanceStatus } from "../lib/helpers";
 import { Button, Badge } from "./ui";
+import AnnouncementBanner from "./AnnouncementBanner";
 
 export default function Dashboard() {
   const [showHistory, setShowHistory] = useState(false);
@@ -186,6 +187,8 @@ export default function Dashboard() {
           </a>
         )}
       </motion.div>
+
+      <AnnouncementBanner />
 
       {/* Welcome header */}
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">

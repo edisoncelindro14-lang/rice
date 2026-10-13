@@ -1381,7 +1381,7 @@ export default function Admin() {
         <div className="space-y-6">
           <div className="bg-white rounded-3xl shadow-lg border border-gray-100 p-6">
             <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2"><Megaphone className="w-5 h-5 text-amber-500" /> Announcement</h2>
-            <p className="text-sm text-gray-500 mb-4">Write a text announcement that appears below the timer banner on every user dashboard. Toggle it on or off at any time.</p>
+            <p className="text-sm text-gray-500 mb-4">Write a text announcement that appears above "Welcome back" on every user dashboard. Turn on "Visible to users" before saving, or it stays hidden.</p>
             <div className="space-y-4">
               <div>
                 <Label>Announcement Text</Label>
