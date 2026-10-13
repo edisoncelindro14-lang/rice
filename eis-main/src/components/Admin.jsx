@@ -540,18 +540,20 @@ export default function Admin() {
   async function saveAnnouncement() {
     setSavingAnnouncement(true);
     try {
-      const textExisting = settings.find(s => s.setting_key === "announcement_text");
-      if (textExisting) await updateRecord("system_settings", textExisting.id, { setting_value: announcementText });
-      else await createRecord("system_settings", { setting_key: "announcement_text", setting_value: announcementText });
-
-      const enaExisting = settings.find(s => s.setting_key === "announcement_enabled");
-      if (enaExisting) await updateRecord("system_settings", enaExisting.id, { setting_value: String(announcementEnabled) });
-      else await createRecord("system_settings", { setting_key: "announcement_enabled", setting_value: String(announcementEnabled) });
-
+      const { error } = await supabase
+        .from("system_settings")
+        .upsert(
+          [
+            { setting_key: "announcement_text", setting_value: announcementText },
+            { setting_key: "announcement_enabled", setting_value: String(announcementEnabled) },
+          ],
+          { onConflict: "setting_key" }
+        );
+      if (error) throw error;
       toast.success("Announcement saved");
       refetchSettings();
       window.dispatchEvent(new CustomEvent("system_settings_changed"));
-    } catch { toast.error("Failed to save announcement"); }
+    } catch (err) { toast.error(err?.message || "Failed to save announcement"); }
     setSavingAnnouncement(false);
   }
 
