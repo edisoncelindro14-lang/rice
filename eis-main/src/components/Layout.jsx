@@ -48,7 +48,9 @@ export default function Layout({ children, currentPageName }) {
       .subscribe();
     // Polling fallback in case realtime is not enabled
     const interval = setInterval(() => refetchSettings(), 15000);
-    return () => { supabase.removeChannel(channel); clearInterval(interval); };
+    const onSettingsChanged = () => refetchSettings();
+    window.addEventListener("system_settings_changed", onSettingsChanged);
+    return () => { supabase.removeChannel(channel); clearInterval(interval); window.removeEventListener("system_settings_changed", onSettingsChanged); };
   }, [refetchSettings]);
 
   const settingsMap = {};

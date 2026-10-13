@@ -18,7 +18,9 @@ export default function AnnouncementBanner() {
       .on("postgres_changes", { event: "*", schema: "public", table: "system_settings" }, () => refetch())
       .subscribe();
     const interval = setInterval(() => refetch(), 5000);
-    return () => { supabase.removeChannel(channel); clearInterval(interval); };
+    const onSettingsChanged = () => refetch();
+    window.addEventListener("system_settings_changed", onSettingsChanged);
+    return () => { supabase.removeChannel(channel); clearInterval(interval); window.removeEventListener("system_settings_changed", onSettingsChanged); };
   }, [refetch]);
 
   const map = {};

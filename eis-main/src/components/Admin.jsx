@@ -550,6 +550,7 @@ export default function Admin() {
 
       toast.success("Announcement saved");
       refetchSettings();
+      window.dispatchEvent(new CustomEvent("system_settings_changed"));
     } catch { toast.error("Failed to save announcement"); }
     setSavingAnnouncement(false);
   }
