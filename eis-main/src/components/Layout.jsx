@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { LayoutDashboard, GitBranch, Users, Wallet, Layers, User, Shield, Crown, Store, LogOut, Menu, X, ChevronRight, Archive } from "lucide-react";
 import { useTable, useCurrentMember } from "../lib/useData";
 import { clearMemberSession, getSessionMemberId } from "../lib/auth";
-import { supabase } from "../lib/supabase";
 import { MaintenanceBanner } from "./MaintenanceBanner";
 import AnnouncementBanner from "./AnnouncementBanner";
 import { GCashButton } from "./GCashButton";
@@ -40,17 +39,12 @@ export default function Layout({ children, currentPageName }) {
   const memberId = getSessionMemberId();
   const member = memberId ? members.find(m => m.id === memberId) : null;
 
-  // Real-time update: refetch settings when system_settings changes (e.g. admin toggles tab visibility)
+  // Poll + custom event: refetch settings when system_settings changes (e.g. admin toggles tab visibility)
   useEffect(() => {
-    const channel = supabase
-      .channel("system_settings_changes")
-      .on("postgres_changes", { event: "*", schema: "public", table: "system_settings" }, () => refetchSettings())
-      .subscribe();
-    // Polling fallback in case realtime is not enabled
     const interval = setInterval(() => refetchSettings(), 15000);
     const onSettingsChanged = () => refetchSettings();
     window.addEventListener("system_settings_changed", onSettingsChanged);
-    return () => { supabase.removeChannel(channel); clearInterval(interval); window.removeEventListener("system_settings_changed", onSettingsChanged); };
+    return () => { clearInterval(interval); window.removeEventListener("system_settings_changed", onSettingsChanged); };
   }, [refetchSettings]);
 
   const settingsMap = {};
