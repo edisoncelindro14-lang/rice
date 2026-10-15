@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { User, Lock, ArrowRight, Eye, EyeOff } from "lucide-react";
 import toast from "react-hot-toast";
@@ -8,11 +8,38 @@ import { saveMemberSession } from "../lib/auth";
 import AuthShell, { ORANGE_GRADIENT } from "./AuthShell";
 import AuthInput from "./AuthInput";
 
+const SAVED_KEY = "pp_saved_credentials";
+
+function loadSavedCredentials() {
+  try {
+    return JSON.parse(localStorage.getItem(SAVED_KEY) || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function saveCredentials(username, password) {
+  const existing = loadSavedCredentials();
+  const filtered = existing.filter(c => c.username !== username);
+  filtered.push({ username, password });
+  localStorage.setItem(SAVED_KEY, JSON.stringify(filtered));
+  return filtered;
+}
+
 export default function Login() {
   const nav = useNavigate();
   const [form, setForm] = useState({ username: "", password: "" });
   const [showPwd, setShowPwd] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [savedCreds, setSavedCreds] = useState([]);
+
+  useEffect(() => {
+    setSavedCreds(loadSavedCredentials());
+  }, []);
+
+  const fillCredential = useCallback((cred) => {
+    setForm({ username: cred.username, password: cred.password });
+  }, []);
 
   async function submit(e) {
     e.preventDefault();
@@ -34,6 +61,9 @@ export default function Login() {
         setBusy(false);
         return;
       }
+      // Auto-save credentials on this device for quick re-login
+      const updated = saveCredentials(form.username, form.password);
+      setSavedCreds(updated);
       saveMemberSession(member.id);
       prefetchTables(["members", "system_settings", "maintenance_codes", "transactions"]);
       toast.success(`Welcome back, ${member.full_name}!`);
@@ -81,6 +111,26 @@ export default function Login() {
         >
           {busy ? "Signing in..." : "Login"} <ArrowRight className="w-5 h-5" />
         </button>
+
+        {savedCreds.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-white text-sm">Saved on this device — tap to fill:</p>
+            <div className="flex flex-wrap gap-2">
+              {savedCreds.map((cred) => (
+                <button
+                  key={cred.username}
+                  type="button"
+                  onClick={() => fillCredential(cred)}
+                  className="px-4 py-2 rounded-full text-white text-sm border border-white/30 hover:border-orange-400 hover:bg-white/10 transition"
+                  style={{ background: "rgba(255,255,255,0.15)" }}
+                >
+                  @{cred.username}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         <p className="text-center text-white text-[17px]">
           Don't have an account? <Link to="/Register" className="text-orange-400 hover:underline">Register here</Link>
         </p>
