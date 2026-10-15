@@ -424,26 +424,6 @@ export default function Admin() {
         toast.error("Cannot set a member as their own sponsor");
         return;
       }
-      // Prevent circular relationships: the new sponsor must not be in the member's downline
-      if (newSponsorId) {
-        const downlineIds = new Set();
-        const stack = [memberId];
-        while (stack.length) {
-          const id = stack.pop();
-          members
-            .filter(m => (m.placement_id || m.referrer_id) === id && m.status === "approved")
-            .forEach(m => {
-              if (!downlineIds.has(m.id)) {
-                downlineIds.add(m.id);
-                stack.push(m.id);
-              }
-            });
-        }
-        if (downlineIds.has(newSponsorId)) {
-          toast.error("Cannot set a downline as sponsor — this would create a cycle");
-          return;
-        }
-      }
       const member = members.find(m => m.id === memberId);
       const oldSponsor = members.find(m => m.id === member.referrer_id);
       const newSponsor = newSponsorId ? members.find(m => m.id === newSponsorId) : null;
