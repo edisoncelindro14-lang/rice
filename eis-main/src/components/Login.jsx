@@ -4,27 +4,9 @@ import { User, Lock, ArrowRight, Eye, EyeOff } from "lucide-react";
 import toast from "react-hot-toast";
 import { supabase } from "../lib/supabase";
 import { prefetchTables } from "../lib/useData";
-import { saveMemberSession } from "../lib/auth";
+import { saveMemberSession, loadSavedCredentials, saveCredentials } from "../lib/auth";
 import AuthShell, { ORANGE_GRADIENT } from "./AuthShell";
 import AuthInput from "./AuthInput";
-
-const SAVED_KEY = "pp_saved_credentials";
-
-function loadSavedCredentials() {
-  try {
-    return JSON.parse(localStorage.getItem(SAVED_KEY) || "[]");
-  } catch {
-    return [];
-  }
-}
-
-function saveCredentials(username, password) {
-  const existing = loadSavedCredentials();
-  const filtered = existing.filter(c => c.username !== username);
-  filtered.push({ username, password });
-  localStorage.setItem(SAVED_KEY, JSON.stringify(filtered));
-  return filtered;
-}
 
 export default function Login() {
   const nav = useNavigate();
