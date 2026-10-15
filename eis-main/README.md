@@ -21,6 +21,18 @@ GitHub/Vercel/Supabase rebuild of the Mamlakah Network System.
 7. Run `npm run dev`.
 8. Push to GitHub and connect the repository to Vercel.
 
+## Sponsor changes
+
+Before using **Admin → Change Sponsor**, apply `supabase/migrations/005_genealogy_placement.sql` and then `supabase/migrations/011_change_member_sponsor.sql` in the Supabase SQL Editor. Vercel frontend deployments do not apply SQL migrations. The local Base44 environment applies the sponsor migration automatically.
+
+Sponsor changes move the existing member record, updating both the sponsor and placement links in one database transaction. Selecting a downline as the new sponsor promotes that downline into the member's previous position first, so the two members can be reversed repeatedly without cycles or duplicate occupied slots. Other downlines remain attached to their existing parent. Actual placement counts and affected tree levels are recalculated; failed changes roll back completely. The function uses the caller's existing table permissions and RLS.
+
+Regression check (temporary fixtures are rolled back):
+
+```sh
+docker compose -f docker-compose.base44.yml exec -T db psql -U postgres -v ON_ERROR_STOP=1 < supabase/tests/change_member_sponsor.sql
+```
+
 ## Security
 
 Never commit `.env` files or the Supabase service-role key.
