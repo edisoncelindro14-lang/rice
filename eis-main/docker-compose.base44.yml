@@ -1,5 +1,15 @@
 services:
+  # PostgREST's minimal image has no HTTP probe tool. Share Alpine's existing
+  # BusyBox and loader without changing the application image or source.
+  health-tools:
+    image: nginx:alpine
+    entrypoint: ["/bin/sh", "-ec"]
+    command: ["cp /bin/busybox /health/busybox; cp /lib/ld-musl-*.so.1 /health/ld-musl.so"]
+    volumes:
+      - health_tools:/health
+
   db:
+    restart: on-failure
     image: postgres:16-alpine
     environment:
       - POSTGRES_USER=postgres
@@ -42,10 +52,26 @@ services:
     command:
       - while true; do psql -h db -U postgres -qAt -c "select public.run_auto_redeem()" >/dev/null 2>&1; sleep 30; done
     restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "psql -h db -U postgres -qAt -c 'select 1' >/dev/null"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
   api:
+    restart: on-failure
     image: postgrest/postgrest:v12.2.3
+    volumes:
+      - health_tools:/health:ro
+    healthcheck:
+      test: ["CMD", "/health/ld-musl.so", "/health/busybox", "wget", "-q", "-T", "3", "-O", "/dev/null", "http://127.0.0.1:3000/"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
     depends_on:
+      health-tools:
+        condition: service_completed_successfully
       db:
         condition: service_healthy
       migrations:
@@ -65,18 +91,34 @@ services:
       - storage_data:/data
     command: ["node", "local-storage.cjs"]
     restart: on-failure
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/').then(async r=>{const b=await r.json();if(r.status!==404||b.message!=='Unsupported')process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   proxy:
+    restart: on-failure
     image: nginx:alpine
     depends_on:
-      - api
-      - storage
+      api:
+        condition: service_healthy
+      storage:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -T 3 -O /dev/null 'http://127.0.0.1:8000/rest/v1/members?select=id&limit=1'"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     ports:
       - "8000:8000"
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
 
   web:
+    restart: on-failure
     image: node:22
     working_dir: /app
     volumes:
@@ -86,6 +128,7 @@ services:
       - "3000:5173"
     environment:
       - __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS
+      - CHOKIDAR_USEPOLLING=true
       # Local PostgREST fallback — real Supabase is missing the placement_id column.
       # Remove these two lines once the column is added to the real Supabase project.
       - VITE_SUPABASE_URL=https://8000-${BASE44_PUBLIC_HOST_SUFFIX}
@@ -93,10 +136,18 @@ services:
     env_file:
       - ./.env.base44-defaults
       - /run/base44/app.env
-    command: sh -c "npm install && npm run dev"
+    command: ["sh", "-ec", "npm ci --no-audit --no-fund && exec npm run dev -- --host 0.0.0.0"]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:5173/').then(async r=>{if(!r.ok||!(await r.text()).includes('/src/main.jsx'))process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 120s
     depends_on:
-      - proxy
+      proxy:
+        condition: service_healthy
 
 volumes:
+  health_tools:
   db_data:
   storage_data:

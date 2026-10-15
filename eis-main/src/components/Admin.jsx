@@ -59,6 +59,8 @@ export default function Admin() {
   const [transferCodeCount, setTransferCodeCount] = useState("1");
   const [transferring, setTransferring] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [sponsorSearch, setSponsorSearch] = useState("");
+  const [sponsorSearchOpen, setSponsorSearchOpen] = useState(false);
   const [overrideModal, setOverrideModal] = useState(null);
   const [balanceModal, setBalanceModal] = useState(null);
 
@@ -418,10 +420,34 @@ export default function Admin() {
 
   async function changeSponsor(memberId, newSponsorId) {
     try {
+      if (newSponsorId === memberId) {
+        toast.error("Cannot set a member as their own sponsor");
+        return;
+      }
+      // Prevent circular relationships: the new sponsor must not be in the member's downline
+      if (newSponsorId) {
+        const downlineIds = new Set();
+        const stack = [memberId];
+        while (stack.length) {
+          const id = stack.pop();
+          members
+            .filter(m => (m.placement_id || m.referrer_id) === id && m.status === "approved")
+            .forEach(m => {
+              if (!downlineIds.has(m.id)) {
+                downlineIds.add(m.id);
+                stack.push(m.id);
+              }
+            });
+        }
+        if (downlineIds.has(newSponsorId)) {
+          toast.error("Cannot set a downline as sponsor — this would create a cycle");
+          return;
+        }
+      }
       const member = members.find(m => m.id === memberId);
       const oldSponsor = members.find(m => m.id === member.referrer_id);
       const newSponsor = newSponsorId ? members.find(m => m.id === newSponsorId) : null;
-      await updateRecord("members", memberId, { referrer_id: newSponsorId || null });
+      await updateRecord("members", memberId, { referrer_id: newSponsorId || null, placement_id: newSponsorId || null });
       if (oldSponsor) await updateRecord("members", oldSponsor.id, { direct_downlines_count: Math.max(0, (oldSponsor.direct_downlines_count || 0) - 1) });
       if (newSponsor) await updateRecord("members", newSponsor.id, { direct_downlines_count: (newSponsor.direct_downlines_count || 0) + 1 });
       toast.success("Sponsor updated");
@@ -1667,13 +1693,55 @@ export default function Admin() {
                 <p className="text-sm text-gray-500">Changing the sponsor will update downline counts for both old and new sponsors.</p>
                 <div>
                   <Label>Select New Sponsor</Label>
-                  <select value={sponsorModal.newSponsorId} onChange={e => setSponsorModal({ ...sponsorModal, newSponsorId: e.target.value })}
-                    className="w-full h-12 rounded-xl border border-gray-200 px-4 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20">
-                    <option value="">None (root — no sponsor)</option>
-                    {approvedMembers.filter(m => m.id !== sponsorModal.member?.id).map(m => (
-                      <option key={m.id} value={m.id}>{m.full_name} (@{m.username}) — {m.direct_downlines_count || 0}/8 downlines</option>
-                    ))}
-                  </select>
+                  {sponsorModal.newSponsorId && !sponsorSearchOpen ? (
+                    <div className="flex items-center justify-between w-full h-12 rounded-xl border border-gray-200 px-4 bg-white">
+                      <span className="text-sm font-medium text-gray-900 truncate">
+                        {approvedMembers.find(m => m.id === sponsorModal.newSponsorId)?.full_name || ""} <span className="text-gray-400">(@{approvedMembers.find(m => m.id === sponsorModal.newSponsorId)?.username})</span>
+                      </span>
+                      <button type="button" onClick={() => { setSponsorModal({ ...sponsorModal, newSponsorId: "" }); setSponsorSearch(""); setSponsorSearchOpen(true); }} className="text-gray-400 hover:text-red-500"><XIcon className="w-4 h-4" /></button>
+                    </div>
+                  ) : (
+                    <input
+                      type="text"
+                      value={sponsorSearch}
+                      onChange={e => { setSponsorSearch(e.target.value); setSponsorSearchOpen(true); }}
+                      onFocus={() => setSponsorSearchOpen(true)}
+                      onBlur={() => setTimeout(() => setSponsorSearchOpen(false), 200)}
+                      placeholder={sponsorModal.newSponsorId ? "Search to change..." : "Search username or name..."}
+                      className="w-full h-12 rounded-xl border border-gray-200 px-4 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20"
+                    />
+                  )}
+                  {sponsorSearchOpen && (
+                    <div className="absolute z-30 mt-1 w-full max-h-60 overflow-y-auto bg-white rounded-xl border border-gray-200 shadow-lg">
+                      <button type="button" onClick={() => { setSponsorModal({ ...sponsorModal, newSponsorId: "" }); setSponsorSearch(""); setSponsorSearchOpen(false); }}
+                        className={`w-full text-left px-4 py-2.5 text-sm hover:bg-amber-50 transition-colors ${!sponsorModal.newSponsorId ? "bg-amber-50 font-medium text-amber-700" : "text-gray-600"}`}>
+                        None (root — no sponsor)
+                      </button>
+                      {approvedMembers
+                        .filter(m => m.id !== sponsorModal.member?.id)
+                        .filter(m => {
+                          if (!sponsorSearch) return true;
+                          const q = sponsorSearch.toLowerCase();
+                          return (m.full_name || "").toLowerCase().includes(q) || (m.username || "").toLowerCase().includes(q);
+                        })
+                        .slice(0, 50)
+                        .map(m => (
+                          <button key={m.id} type="button"
+                            onClick={() => { setSponsorModal({ ...sponsorModal, newSponsorId: m.id }); setSponsorSearch(""); setSponsorSearchOpen(false); }}
+                            className={`w-full text-left px-4 py-2.5 text-sm hover:bg-amber-50 transition-colors ${sponsorModal.newSponsorId === m.id ? "bg-amber-50 font-medium text-amber-700" : "text-gray-700"}`}>
+                            {m.full_name} <span className="text-gray-400">(@{m.username})</span> — {m.direct_downlines_count || 0}/8
+                          </button>
+                        ))}
+                      {sponsorSearch && approvedMembers
+                        .filter(m => m.id !== sponsorModal.member?.id)
+                        .filter(m => {
+                          const q = sponsorSearch.toLowerCase();
+                          return (m.full_name || "").toLowerCase().includes(q) || (m.username || "").toLowerCase().includes(q);
+                        }).length === 0 && (
+                        <p className="px-4 py-3 text-sm text-gray-400">No members found</p>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="p-6 border-t border-gray-100 flex gap-3">

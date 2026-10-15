@@ -1,16 +1,17 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { GitBranch, Search, ArrowRight, Users, ZoomIn, ZoomOut, User, Clock, Activity, UserPlus, X, Heart, ChevronLeft } from "lucide-react";
+import { GitBranch, ArrowRight, Users, ZoomIn, ZoomOut, Activity, UserPlus, X, ChevronLeft } from "lucide-react";
 import { useTable, useCurrentMember, updateRecord } from "../lib/useData";
 import { Button } from "./ui";
-import { maintenanceStatus, formatTime } from "../lib/helpers";
 import { distributePlacementCommissions } from "../lib/commissions";
 import { supabase } from "../lib/supabase";
 import toast from "react-hot-toast";
+import MemberList from "./genealogy/MemberList";
+import Tree from "./genealogy/Tree";
+import { indexChildren, indexLatestCodes } from "./genealogy/treeData";
 
-export default function Genealogy() {
-  const [search, setSearch] = useState("");
+function Genealogy() {
   const [selected, setSelected] = useState(null);
   const [zoom, setZoom] = useState(100);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -21,46 +22,44 @@ export default function Genealogy() {
   const [history, setHistory] = useState([]);
   const [placementTarget, setPlacementTarget] = useState(null);
   const [placing, setPlacing] = useState(false);
-  const [, setTick] = useState(0);
   const { data: members = [], isLoading, refetch: refetchMembers } = useTable("members");
   const { data: codes = [] } = useTable("maintenance_codes");
   const { currentMember } = useCurrentMember(members);
-
-  // Live countdown — re-render every second so maintenance timers tick down.
-  // Paused during drag to keep panning smooth on mobile.
-  useEffect(() => {
-    if (isDragging) return;
-    const interval = setInterval(() => setTick(t => t + 1), 1000);
-    return () => clearInterval(interval);
-  }, [isDragging]);
 
   useEffect(() => {
     if (currentMember && !selected) setSelected(currentMember);
   }, [currentMember]);
 
+  // Keep navigation stable, and snapshot the previous member before queuing history.
+  const selectedRef = useRef(null);
+  selectedRef.current = selected;
+
   // Navigate to a member: push current selection onto history stack, reset pan to top.
   const selectMember = useCallback((member) => {
-    if (selected && selected.id !== member.id) {
-      setHistory(h => [...h, selected]);
+    const previous = selectedRef.current;
+    if (previous && previous.id !== member.id) {
+      setHistory(h => [...h, previous]);
     }
+    selectedRef.current = member;
     setSelected(member);
     setPan({ x: 0, y: 0 });
-  }, [selected]);
+  }, []);
 
   // Go back to the previous member in history.
   const goBack = useCallback(() => {
-    setHistory(h => {
-      if (h.length === 0) return h;
-      const prev = h[h.length - 1];
-      setSelected(prev);
-      setPan({ x: 0, y: 0 });
-      return h.slice(0, -1);
-    });
-  }, []);
+    if (history.length === 0) return;
+    const previous = history[history.length - 1];
+    selectedRef.current = previous;
+    setSelected(previous);
+    setPan({ x: 0, y: 0 });
+    setHistory(h => h.slice(0, -1));
+  }, [history]);
 
   const allApproved = useMemo(() => members.filter(m => m.status === "approved"), [members]);
   const lobbyMembers = useMemo(() => members.filter(m => m.status === "pending" && m.referrer_id === currentMember?.id), [members, currentMember?.id]);
   const isSuperAdmin = currentMember?.username === "supadmin" || currentMember?.username === "admin";
+  const childrenByParent = useMemo(() => indexChildren(allApproved), [allApproved]);
+  const codesByMember = useMemo(() => indexLatestCodes(codes), [codes]);
 
   // Non-super-admin viewers only see their own downline tree — supadmin, admin,
   // and crosslines (members outside their downline lineage) are hidden.
@@ -70,146 +69,19 @@ export default function Genealogy() {
     const stack = [currentMember.id];
     while (stack.length) {
       const id = stack.pop();
-      allApproved.filter(m => (m.placement_id || m.referrer_id) === id).forEach(m => {
+      (childrenByParent.get(id) || []).forEach(m => {
         if (!ids.has(m.id)) { ids.add(m.id); stack.push(m.id); }
       });
     }
     return ids;
-  }, [isSuperAdmin, currentMember, allApproved]);
+  }, [isSuperAdmin, currentMember, childrenByParent]);
 
   const approvedMembers = useMemo(() => visibleIds
     ? allApproved.filter(m => visibleIds.has(m.id))
     : allApproved, [allApproved, visibleIds]);
 
-  const searchResults = search
-    ? approvedMembers.filter(m =>
-        m.full_name?.toLowerCase().includes(search.toLowerCase()) ||
-        m.username?.toLowerCase().includes(search.toLowerCase()) ||
-        m.email?.toLowerCase().includes(search.toLowerCase()) ||
-        m.referral_code?.toLowerCase().includes(search.toLowerCase())
-      )
-    : [];
-
+  const visibleChildrenByParent = useMemo(() => indexChildren(approvedMembers), [approvedMembers]);
   const maxDepth = isSuperAdmin ? Infinity : 5;
-
-  const TreeNode = useCallback(function TreeNode({ member, level = 0 }) {
-    const downlines = approvedMembers.filter(m => (m.placement_id || m.referrer_id) === member.id);
-    const isRoot = level === 0;
-    const status = maintenanceStatus(member, codes);
-    const isActive = status.isGreen;
-    const slots = `${downlines.length}/8`;
-    const canPlace = lobbyMembers.length > 0 && downlines.length < 8;
-
-    return (
-      <div className="flex flex-col items-center">
-        {/* Node card */}
-        <div
-          data-node
-          onClick={() => selectMember(member)}
-          className={`group cursor-pointer relative w-48 rounded-2xl px-3.5 py-3.5 transition-all duration-300 hover:scale-105 hover:shadow-2xl border-2 ${
-            isActive
-              ? "bg-gradient-to-br from-blue-400 to-blue-600 border-blue-300/50 text-white"
-              : "bg-gradient-to-br from-gray-700 to-black border-gray-700/50 text-white"
-          } ${isRoot ? "ring-4 ring-amber-400 ring-offset-2 ring-offset-gray-50" : ""}`}
-        >
-          {/* Subtle inner glow overlay */}
-          <div className="absolute inset-0 rounded-2xl bg-gradient-to-t from-black/10 to-white/10 pointer-events-none" />
-
-          {/* Top row: avatar + username + level badge */}
-          <div className="relative flex items-center gap-2 mb-2.5">
-            <span className={`font-bold flex-1 text-center px-1 drop-shadow-sm break-words leading-tight ${
-              (member.username || member.full_name || "").length > 22 ? "text-[10px]" :
-              (member.username || member.full_name || "").length > 16 ? "text-[11px]" :
-              (member.username || member.full_name || "").length > 12 ? "text-xs" : "text-sm"
-            }`}>{member.username || member.full_name}</span>
-            <div className="min-w-8 h-8 px-1.5 rounded-lg bg-white/40 backdrop-blur-sm flex items-center justify-center flex-shrink-0 ring-2 ring-white/50 shadow-md">
-              <span className="text-xs font-extrabold text-white drop-shadow-md tracking-wide">{isRoot ? "You" : `L${level}`}</span>
-            </div>
-          </div>
-
-          {/* Status row */}
-          <div className="relative flex items-center justify-between text-[11px] mb-1.5">
-            {isActive ? (
-              <span className="flex items-center gap-1 font-medium bg-white/15 rounded-full px-1.5 py-0.5">
-                <motion.span animate={{ scale: [1, 1.4, 1, 1.2, 1] }} transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }} className="flex items-center">
-                  <Heart className="w-3 h-3 text-white fill-white" />
-                </motion.span>
-                {formatTime(status.secondsLeft)}
-              </span>
-            ) : status.secondsLeft > 0 ? (
-              <span className="flex items-center gap-1 font-medium bg-white/10 rounded-full px-1.5 py-0.5">
-                <Heart className="w-3 h-3 text-white/60" />
-                {formatTime(status.secondsLeft)}
-              </span>
-            ) : (
-              <span className="flex items-center gap-1 font-medium bg-white/10 rounded-full px-1.5 py-0.5">
-                <Heart className="w-3 h-3 text-white/60" />
-                Expired
-              </span>
-            )}
-            <span className="font-bold bg-white/20 rounded-full px-1.5 py-0.5">{slots}</span>
-          </div>
-
-          {/* Slot progress bar */}
-          <div className="relative h-1.5 rounded-full bg-white/15 overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all duration-500 ${isActive ? "bg-white/80" : "bg-white/50"}`}
-              style={{ width: `${(downlines.length / 8) * 100}%` }}
-            />
-          </div>
-
-          {canPlace && (
-            <button
-              onClick={(e) => { e.stopPropagation(); setPlacementTarget(member); }}
-              className="relative mt-2 w-full bg-white/25 hover:bg-white/40 backdrop-blur-sm rounded-lg py-1.5 text-[10px] font-bold flex items-center justify-center gap-1 transition-all border border-white/30 hover:border-white/50"
-            >
-              <UserPlus className="w-3 h-3" /> Place Here
-            </button>
-          )}
-        </div>
-
-        {/* Children with T-junction connectors */}
-        {downlines.length > 0 && level < maxDepth && (
-          <>
-            {/* Vertical line from parent bottom to horizontal bar */}
-            <div className="w-1 h-6 rounded-full bg-gradient-to-b from-emerald-400 to-blue-500" />
-            {/* Children row */}
-            <div className="flex flex-nowrap justify-center gap-4">
-              {downlines.slice(0, 8).map((d, i, arr) => {
-                const isOnly = arr.length === 1;
-                const isFirst = i === 0;
-                const isLast = i === arr.length - 1;
-                return (
-                  <div key={d.id} className="relative flex flex-col items-center">
-                    {/* Horizontal bar segment */}
-                    {!isOnly && (
-                      <div
-                        className="absolute top-0 h-1 rounded-full bg-gradient-to-r from-blue-500 to-emerald-400"
-                        style={{
-                          left: isFirst ? '50%' : '-8px',
-                          right: isLast ? '50%' : '-8px',
-                        }}
-                      />
-                    )}
-                    {/* Vertical drop from horizontal bar to child card */}
-                    <div className="w-1 h-6 rounded-full bg-gradient-to-b from-blue-500 to-emerald-400" />
-                    <TreeNode member={d} level={level + 1} />
-                  </div>
-                );
-              })}
-            </div>
-          </>
-        )}
-
-        {/* Depth limit indicator — shown when downlines exist but are hidden */}
-        {downlines.length > 0 && level >= maxDepth && (
-          <div className="mt-2 text-xs text-gray-400 italic">
-            {downlines.length} more downline{downlines.length !== 1 ? "s" : ""} (visible to admins only)
-          </div>
-        )}
-      </div>
-    );
-  }, [approvedMembers, codes, selectMember, lobbyMembers, setPlacementTarget, maxDepth]);
 
   async function handlePlaceMember(lobbyMember) {
     setPlacing(true);
@@ -309,8 +181,6 @@ export default function Genealogy() {
     }
   };
 
-  const resetView = () => { setPan({ x: 0, y: 0 }); setZoom(100); };
-
   return (
     <div className="max-w-[1600px] mx-auto px-3 sm:px-6 py-6 genealogy-scroll">
       <style>{`
@@ -373,55 +243,22 @@ export default function Genealogy() {
       )}
 
       <div className="flex flex-col lg:flex-row gap-4">
-        {/* Left: Members list panel */}
-        <div className="w-full lg:w-56 flex-shrink-0 bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden h-fit lg:sticky lg:top-4">
-          <div className="p-3 border-b border-gray-100">
-            <h3 className="font-bold text-gray-900 flex items-center gap-2"><Users className="w-4 h-4 text-gray-500" /> Members</h3>
-          </div>
-          <div className="p-2 border-b border-gray-100">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-              <input
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Search members..."
-                className="pl-8 w-full rounded-lg border border-gray-200 h-9 text-sm outline-none focus:border-emerald-500"
-              />
-            </div>
-          </div>
-          <div className="max-h-[168px] overflow-y-auto scroll-thick">
-            {(search ? searchResults : approvedMembers).map(m => {
-              const status = maintenanceStatus(m, codes);
-              const isActive = status.isGreen;
-              return (
-                <button
-                  key={m.id}
-                  onClick={() => { selectMember(m); setSearch(""); }}
-                  className={`w-full text-left px-3 py-2.5 border-b border-gray-50 last:border-0 transition-colors flex items-center gap-2 ${
-                    selected?.id === m.id ? "bg-blue-100" : "hover:bg-gray-50"
-                  }`}
-                >
-                  <span className={`w-2 h-2 rounded-full flex-shrink-0 ${isActive ? "bg-blue-500" : "bg-black"}`} />
-                  <div className="min-w-0">
-                    <p className="font-medium text-gray-900 text-sm truncate">{m.username || m.full_name}</p>
-                    <p className="text-xs text-gray-400 truncate">{isSuperAdmin ? `L${m.tree_level || 0}` : (m.id === currentMember?.id ? "You" : `L${(m.tree_level || 0) - (currentMember?.tree_level || 0)}`)} · {m.direct_downlines_count || 0}/8</p>
-                  </div>
-                </button>
-              );
-            })}
-            {search && searchResults.length === 0 && (
-              <p className="text-center py-6 text-sm text-gray-400">No members found.</p>
-            )}
-          </div>
-        </div>
+        <MemberList
+          members={approvedMembers}
+          codesByMember={codesByMember}
+          selectedId={selected?.id}
+          currentMember={currentMember}
+          isSuperAdmin={isSuperAdmin}
+          onSelect={selectMember}
+        />
 
         {/* Right: Tree visualization */}
-        <div className="flex-1 min-h-[700px] flex flex-col bg-gradient-to-br from-gray-50 to-slate-100 rounded-2xl shadow-lg border border-gray-200">
+        <div className="flex-1 min-w-0 min-h-[700px] flex flex-col bg-gradient-to-br from-gray-50 to-slate-100 rounded-2xl shadow-lg border border-gray-200">
           {/* Zoom controls — sticky below the mobile header so they never scroll under it */}
-          <div className="sticky top-16 lg:static z-30 bg-white flex items-center justify-between gap-2 px-4 py-3 border-b border-gray-100 rounded-t-2xl">
-            <div className="flex items-center gap-2 text-sm text-gray-500">
-              <Activity className="w-4 h-4" />
-              <span>Network tree — <strong className="text-gray-700">{selected?.username || selected?.full_name || "—"}</strong></span>
+          <div className="sticky top-16 lg:static z-30 bg-white flex flex-wrap items-center justify-between gap-2 px-4 py-3 border-b border-gray-100 rounded-t-2xl">
+            <div className="flex min-w-0 max-w-full items-center gap-2 text-sm text-gray-500">
+              <Activity className="w-4 h-4 flex-shrink-0" />
+              <span className="min-w-0 break-all">Network tree — <strong className="text-gray-700">{selected?.username || selected?.full_name || "—"}</strong></span>
             </div>
             <div className="flex items-center gap-2">
               {history.length > 0 && (
@@ -440,15 +277,26 @@ export default function Genealogy() {
             </div>
           </div>
           <div
-            className="flex-1 overflow-hidden p-4 cursor-grab active:cursor-grabbing touch-none select-none"
+            className="relative flex-1 min-h-[620px] overflow-hidden p-4 cursor-grab active:cursor-grabbing touch-none select-none"
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
             onPointerCancel={handlePointerUp}
             onPointerLeave={handlePointerUp}
           >
-            <div ref={treeRef} style={{ transform: `translate3d(${pan.x}px, ${pan.y}px, 0) scale(${zoom / 100})`, transformOrigin: 'top center', transition: isDragging ? 'none' : 'transform 0.15s ease-out', willChange: 'transform' }}>
-              {selected ? <TreeNode member={selected} /> : (
+            <div ref={treeRef} className="absolute inset-x-4 top-4" style={{ transform: `translate3d(${pan.x}px, ${pan.y}px, 0) scale(${zoom / 100})`, transformOrigin: 'top center', transition: isDragging ? 'none' : 'transform 0.15s ease-out', willChange: isDragging ? 'transform' : 'auto' }}>
+              {selected ? (
+                <Tree
+                  member={selected}
+                  childrenByParent={visibleChildrenByParent}
+                  codesByMember={codesByMember}
+                  canPlaceMembers={lobbyMembers.length > 0}
+                  onSelect={selectMember}
+                  onPlace={setPlacementTarget}
+                  maxDepth={maxDepth}
+                  paused={isDragging}
+                />
+              ) : (
                 <div className="flex flex-col items-center justify-center py-16 text-gray-400">
                   <Users className="w-12 h-12 mb-3 text-gray-300" />
                   <p className="text-sm">No genealogy data available</p>
@@ -497,3 +345,6 @@ export default function Genealogy() {
     </div>
   );
 }
+
+// Admin has its own countdown; it must not re-render this independent view.
+export default React.memo(Genealogy);
