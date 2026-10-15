@@ -32,6 +32,7 @@ export default function Admin() {
   const [redeemCode, setRedeemCode] = useState("");
   const [redeemBusy, setRedeemBusy] = useState(false);
   const [sponsorModal, setSponsorModal] = useState(null);
+  const [savingSponsor, setSavingSponsor] = useState(false);
   const [profileMember, setProfileMember] = useState(null);
   const [profileSearch, setProfileSearch] = useState("");
   const [profileSearchOpen, setProfileSearchOpen] = useState(false);
@@ -64,7 +65,7 @@ export default function Admin() {
   const [overrideModal, setOverrideModal] = useState(null);
   const [balanceModal, setBalanceModal] = useState(null);
 
-  const { data: members = [] } = useTable("members");
+  const { data: members = [], refetch: refetchMembers } = useTable("members");
   const { data: codes = [], refetch: refetchCodes } = useTable("maintenance_codes");
   const { data: withdrawals = [] } = useTable("conversion_requests");
   const { data: gcashInfo = [] } = useTable("gcash_info");
@@ -419,41 +420,26 @@ export default function Admin() {
   }
 
   async function changeSponsor(memberId, newSponsorId) {
+    if (savingSponsor) return;
+    setSavingSponsor(true);
     try {
-      if (newSponsorId === memberId) {
-        toast.error("Cannot set a member as their own sponsor");
-        return;
-      }
-      // Prevent circular relationships: the new sponsor must not be in the member's downline
-      if (newSponsorId) {
-        const downlineIds = new Set();
-        const stack = [memberId];
-        while (stack.length) {
-          const id = stack.pop();
-          members
-            .filter(m => (m.placement_id || m.referrer_id) === id && m.status === "approved")
-            .forEach(m => {
-              if (!downlineIds.has(m.id)) {
-                downlineIds.add(m.id);
-                stack.push(m.id);
-              }
-            });
-        }
-        if (downlineIds.has(newSponsorId)) {
-          toast.error("Cannot set a downline as sponsor — this would create a cycle");
-          return;
-        }
-      }
-      const member = members.find(m => m.id === memberId);
-      const oldSponsor = members.find(m => m.id === member.referrer_id);
-      const newSponsor = newSponsorId ? members.find(m => m.id === newSponsorId) : null;
-      await updateRecord("members", memberId, { referrer_id: newSponsorId || null, placement_id: newSponsorId || null });
-      if (oldSponsor) await updateRecord("members", oldSponsor.id, { direct_downlines_count: Math.max(0, (oldSponsor.direct_downlines_count || 0) - 1) });
-      if (newSponsor) await updateRecord("members", newSponsor.id, { direct_downlines_count: (newSponsor.direct_downlines_count || 0) + 1 });
-      toast.success("Sponsor updated");
+      const { error } = await supabase.rpc("change_member_sponsor", {
+        p_member_id: memberId,
+        p_sponsor_id: newSponsorId || null,
+      });
+      if (error) throw error;
+      await refetchMembers();
       setSponsorModal(null);
-      window.location.reload();
-    } catch { toast.error("Failed to change sponsor"); }
+      setSponsorSearch("");
+      setSponsorSearchOpen(false);
+      toast.success("Sponsor updated");
+    } catch (err) {
+      toast.error(err?.code === "PGRST202"
+        ? "Apply migration 011_change_member_sponsor.sql in Supabase before changing sponsors."
+        : err?.message || "Failed to change sponsor");
+    } finally {
+      setSavingSponsor(false);
+    }
   }
 
   async function setRole(id, role) {
@@ -731,9 +717,7 @@ export default function Admin() {
                     {(isSupAdmin || isOwner) && <button onClick={() => setOverrideModal(m)} className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors" title="Maintenance Override"><Clock className="w-4 h-4" /></button>}
 
                     {(isSupAdmin || isOwner) && <button onClick={() => setBalanceModal(m)} className="p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200 transition-colors" title="Edit Balance"><Wallet className="w-4 h-4" /></button>}
-                    {isExpired && getDirectDownlineCount(m.id) === 0 && (
-                      <button onClick={() => setConfirmDelete({ type: "member", id: m.id, name: m.full_name || m.username })} className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors" title="Delete Account"><Trash2 className="w-4 h-4" /></button>
-                    )}
+                    <button onClick={() => setConfirmDelete({ type: "member", id: m.id, name: m.full_name || m.username })} className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors" title="Delete Account"><Trash2 className="w-4 h-4" /></button>
                   </div>
                 </div>
               );
@@ -1690,7 +1674,7 @@ export default function Admin() {
               </div>
               <div className="p-6 space-y-4">
                 <p className="text-sm text-gray-500">Current sponsor: {members.find(m => m.id === sponsorModal.member?.referrer_id)?.username || "None (root)"}</p>
-                <p className="text-sm text-gray-500">Changing the sponsor will update downline counts for both old and new sponsors.</p>
+                <p className="text-sm text-gray-500">Moves this member out of the previous slot. If the new sponsor is their downline, that sponsor takes their previous position so you can swap them again without duplicates.</p>
                 <div>
                   <Label>Select New Sponsor</Label>
                   {sponsorModal.newSponsorId && !sponsorSearchOpen ? (
@@ -1745,7 +1729,7 @@ export default function Admin() {
                 </div>
               </div>
               <div className="p-6 border-t border-gray-100 flex gap-3">
-                <Button onClick={() => changeSponsor(sponsorModal.member.id, sponsorModal.newSponsorId)} className="flex-1 bg-gradient-to-r from-amber-500 to-orange-600 text-white">Update Sponsor</Button>
+                <Button onClick={() => changeSponsor(sponsorModal.member.id, sponsorModal.newSponsorId)} disabled={savingSponsor} className="flex-1 bg-gradient-to-r from-amber-500 to-orange-600 text-white">{savingSponsor ? "Updating..." : "Update Sponsor"}</Button>
                 <Button onClick={() => setSponsorModal(null)} variant="outline" className="flex-1">Cancel</Button>
               </div>
           </div>

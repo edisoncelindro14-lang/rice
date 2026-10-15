@@ -32,6 +32,11 @@ create index if not exists idx_members_placement on public.members(placement_id)
 
 **If the external Supabase becomes unreachable again:** add `VITE_SUPABASE_URL=https://8000-${BASE44_PUBLIC_HOST_SUFFIX}` and a valid PostgREST JWT as `VITE_SUPABASE_ANON_KEY` to the `web` service `environment:` section in `docker-compose.base44.yml` to fall back to the local PostgREST stack.
 
+## Sponsor transfer invariants
+- Admin sponsor changes call `change_member_sponsor` from migration `011_change_member_sponsor.sql`; apply it manually to the Supabase project used by Vercel (after migration 005). The local compose migration job applies it automatically. A frontend deploy alone is insufficient.
+- A downline/new-sponsor interchange promotes the selected sponsor into the moving member's old position before attaching the member underneath it. Check both referral and effective placement chains, including indirect descendants. Never split this into independent browser-side updates: the database transaction prevents half-swaps and stale count increments.
+- Regression test: `docker compose -f docker-compose.base44.yml exec -T db psql -U postgres -v ON_ERROR_STOP=1 < supabase/tests/change_member_sponsor.sql`. Fixtures and the intentional late-failure trigger are rolled back. Coverage includes ten reversals, different sponsor/placement parents, indirect and legacy cycles, exact counters, subtree levels, idempotency, and atomic failure.
+
 ## Verify
 - `curl -sf http://localhost:3000/` returns the landing page HTML
 - Login at `/MemberLogin` with member credentials from the local DB (e.g. `Ceferinoarizobal` / `M12345678`) → navigates to `/Dashboard`
