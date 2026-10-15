@@ -21,7 +21,7 @@ export default function Genealogy() {
   const [history, setHistory] = useState([]);
   const [placementTarget, setPlacementTarget] = useState(null);
   const [placing, setPlacing] = useState(false);
-  const [, setTick] = useState(0);
+  const [tick, setTick] = useState(0);
   const { data: members = [], isLoading, refetch: refetchMembers } = useTable("members");
   const { data: codes = [] } = useTable("maintenance_codes");
   const { currentMember } = useCurrentMember(members);
@@ -210,6 +210,14 @@ export default function Genealogy() {
       </div>
     );
   }, [approvedMembers, codes, selectMember, lobbyMembers, setPlacementTarget, maxDepth]);
+
+  // Memoize the rendered tree so typing in the search box doesn't re-render
+  // the entire recursive tree (which freezes the page for large networks).
+  // Re-renders only when the selection, tree data, or the 1s timer tick changes.
+  const treeContent = useMemo(() => {
+    if (!selected) return null;
+    return <TreeNode member={selected} />;
+  }, [selected, TreeNode, tick]);
 
   async function handlePlaceMember(lobbyMember) {
     setPlacing(true);
@@ -448,7 +456,7 @@ export default function Genealogy() {
             onPointerLeave={handlePointerUp}
           >
             <div ref={treeRef} style={{ transform: `translate3d(${pan.x}px, ${pan.y}px, 0) scale(${zoom / 100})`, transformOrigin: 'top center', transition: isDragging ? 'none' : 'transform 0.15s ease-out', willChange: 'transform' }}>
-              {selected ? <TreeNode member={selected} /> : (
+              {treeContent ?? (
                 <div className="flex flex-col items-center justify-center py-16 text-gray-400">
                   <Users className="w-12 h-12 mb-3 text-gray-300" />
                   <p className="text-sm">No genealogy data available</p>
