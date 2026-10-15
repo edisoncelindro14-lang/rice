@@ -38,14 +38,20 @@ export default function Genealogy() {
     if (currentMember && !selected) setSelected(currentMember);
   }, [currentMember]);
 
+  // Ref mirrors `selected` so selectMember can read the latest value without
+  // being recreated on every selection change. This keeps TreeNode stable —
+  // otherwise React unmounts and remounts the entire recursive tree on each click.
+  const selectedRef = useRef(null);
+  selectedRef.current = selected;
+
   // Navigate to a member: push current selection onto history stack, reset pan to top.
   const selectMember = useCallback((member) => {
-    if (selected && selected.id !== member.id) {
-      setHistory(h => [...h, selected]);
+    if (selectedRef.current && selectedRef.current.id !== member.id) {
+      setHistory(h => [...h, selectedRef.current]);
     }
     setSelected(member);
     setPan({ x: 0, y: 0 });
-  }, [selected]);
+  }, []);
 
   // Go back to the previous member in history.
   const goBack = useCallback(() => {
