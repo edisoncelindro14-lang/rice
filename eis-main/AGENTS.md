@@ -18,7 +18,7 @@ React 18 + Vite 6 frontend. Backend is the external Supabase project (ref: mtfrv
 ## How it works
 The app's `src/lib/supabase.js` creates a Supabase client pointing at `VITE_SUPABASE_URL`.
 
-**Currently using the local PostgREST stack** — the real Supabase project is missing the `placement_id` column on the `members` table, which the "Place Here" lobby button needs. The `web` service `environment:` section in `docker-compose.base44.yml` overrides `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` to point at the local PostgREST stack. The local DB was seeded with a snapshot of the real Supabase data.
+**Currently using the local PostgREST stack** — the real Supabase project is missing the `placement_id` column on the `members` table, which the "Place Here" lobby button needs. The `web` service `environment:` section in `docker-compose.base44.yml` overrides `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` to point at the local PostgREST stack. Fresh local volumes seed only the development admin; a real member snapshot is not automatically imported. Never infer large-network performance from the default one-member fixture.
 
 **Vercel placement setup:** Vercel does not apply SQL migrations. Run `supabase/migrations/005_genealogy_placement.sql` in the SQL Editor of the Supabase project used by Vercel; it adds `placement_id` and reloads the REST schema cache. Do not replace placement with `referrer_id`: the sponsor must be preserved.
 
