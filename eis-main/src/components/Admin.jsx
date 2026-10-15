@@ -427,9 +427,10 @@ export default function Admin() {
       const member = members.find(m => m.id === memberId);
       const oldSponsor = members.find(m => m.id === member.referrer_id);
       const newSponsor = newSponsorId ? members.find(m => m.id === newSponsorId) : null;
-      await updateRecord("members", memberId, { referrer_id: newSponsorId || null, placement_id: newSponsorId || null });
-      if (oldSponsor) await updateRecord("members", oldSponsor.id, { direct_downlines_count: Math.max(0, (oldSponsor.direct_downlines_count || 0) - 1) });
-      if (newSponsor) await updateRecord("members", newSponsor.id, { direct_downlines_count: (newSponsor.direct_downlines_count || 0) + 1 });
+      let { error } = await updateRecord("members", memberId, { referrer_id: newSponsorId || null, placement_id: newSponsorId || null });
+      if (error) throw error;
+      if (oldSponsor) { ({ error } = await updateRecord("members", oldSponsor.id, { direct_downlines_count: Math.max(0, (oldSponsor.direct_downlines_count || 0) - 1) })); if (error) throw error; }
+      if (newSponsor) { ({ error } = await updateRecord("members", newSponsor.id, { direct_downlines_count: (newSponsor.direct_downlines_count || 0) + 1 })); if (error) throw error; }
       toast.success("Sponsor updated");
       setSponsorModal(null);
       window.location.reload();
