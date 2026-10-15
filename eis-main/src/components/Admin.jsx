@@ -427,6 +427,13 @@ export default function Admin() {
       const member = members.find(m => m.id === memberId);
       const oldSponsor = members.find(m => m.id === member.referrer_id);
       const newSponsor = newSponsorId ? members.find(m => m.id === newSponsorId) : null;
+      // Break circular reference: if the new sponsor was previously under this member,
+      // detach the new sponsor so it doesn't point back to the member being moved.
+      if (newSponsor && (newSponsor.placement_id === memberId || newSponsor.referrer_id === memberId)) {
+        let cycleError;
+        ({ error: cycleError } = await updateRecord("members", newSponsorId, { placement_id: null, referrer_id: null }));
+        if (cycleError) throw cycleError;
+      }
       let { error } = await updateRecord("members", memberId, { referrer_id: newSponsorId || null, placement_id: newSponsorId || null });
       if (error) throw error;
       if (oldSponsor) { ({ error } = await updateRecord("members", oldSponsor.id, { direct_downlines_count: Math.max(0, (oldSponsor.direct_downlines_count || 0) - 1) })); if (error) throw error; }
