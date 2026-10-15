@@ -34,7 +34,13 @@ export default function Login() {
   const [savedCreds, setSavedCreds] = useState([]);
 
   useEffect(() => {
-    setSavedCreds(loadSavedCredentials());
+    const saved = loadSavedCredentials();
+    setSavedCreds(saved);
+    // Auto-fill the last used credential
+    if (saved.length > 0) {
+      const last = saved[saved.length - 1];
+      setForm({ username: last.username, password: last.password });
+    }
   }, []);
 
   const fillCredential = useCallback((cred) => {
